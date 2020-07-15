@@ -44,6 +44,7 @@
  ******************************************************************************/
 cy_mutex_t   bt_stack_mutex;
 
+char         bt_trace_buf[CYBT_TRACE_BUFFER_SIZE];
 
 /******************************************************************************
  *                           Function Definitions
@@ -75,11 +76,6 @@ uint8_t *host_stack_get_acl_to_lower_buffer(wiced_bt_transport_t transport, uint
         // One extra byte is added for HCI UART packet type
         msg_packet_len = BT_MSG_HDR_SIZE + HCI_UART_TYPE_HEADER_SIZE + size;
         payload_len = size + HCI_UART_TYPE_HEADER_SIZE;
-    }
-    else if(CYBT_HCI_USB == p_bt_platform_cfg->hci_config.hci_transport)
-    {
-        msg_packet_len = BT_MSG_HDR_SIZE + size;
-        payload_len = size;
     }
     else
     {
@@ -123,10 +119,6 @@ wiced_result_t host_stack_send_acl_to_lower(wiced_bt_transport_t transport,
     {
         // One extra byte is for HCI UART packet type
         p_msg_hdr = (BT_MSG_HDR *)(p_data - BT_MSG_HDR_SIZE - HCI_UART_TYPE_HEADER_SIZE);
-    }
-    else if(CYBT_HCI_USB == p_bt_platform_cfg->hci_config.hci_transport)
-    {
-        p_msg_hdr = (BT_MSG_HDR *)(p_data - BT_MSG_HDR_SIZE);
     }
     else
     {
@@ -179,11 +171,6 @@ wiced_result_t host_stack_send_cmd_to_lower(uint8_t *p_cmd, uint16_t cmd_len)
         // One extra byte is added for HCI UART packet type
         msg_packet_len = BT_MSG_HDR_SIZE + HCI_UART_TYPE_HEADER_SIZE + cmd_len;
         payload_len = cmd_len + HCI_UART_TYPE_HEADER_SIZE;
-    }
-    else if(CYBT_HCI_USB == p_bt_platform_cfg->hci_config.hci_transport)
-    {
-        msg_packet_len = BT_MSG_HDR_SIZE + cmd_len;
-        payload_len = cmd_len;
     }
     else
     {
@@ -247,11 +234,6 @@ wiced_result_t host_stack_send_sco_to_lower(uint16_t handle, uint8_t* p_data, ui
         msg_packet_len = BT_MSG_HDR_SIZE + HCI_UART_TYPE_HEADER_SIZE + sizeof(hci_sco_packet_header_t) + len;;
         payload_len = HCI_UART_TYPE_HEADER_SIZE + sizeof(hci_sco_packet_header_t) + len;
     }
-    else if(CYBT_HCI_USB == p_bt_platform_cfg->hci_config.hci_transport)
-    {
-        msg_packet_len = BT_MSG_HDR_SIZE + sizeof(hci_sco_packet_header_t) + len;
-        payload_len = sizeof(hci_sco_packet_header_t) + len;
-    }
     else
     {
         SPIF_TRACE_ERROR("send_sco_to_lower(): Unknown transport (%d)",
@@ -300,21 +282,36 @@ wiced_result_t host_stack_send_sco_to_lower(uint16_t handle, uint8_t* p_data, ui
     }
 }
 
-void host_stack_print_trace_log(char *p_trace_buf, int trace_buf_len, wiced_bool_t isError)
+void host_stack_print_trace_log(char *p_trace_buf,
+                                int trace_buf_len,
+                                wiced_bt_trace_type_t trace_type
+                               )
 {
-    if(WICED_TRUE == isError)
+    switch(trace_type)
     {
-        STACK_TRACE_ERROR("%s", p_trace_buf);
-    }
-    else
-    {
-        STACK_TRACE_DEBUG("%s", p_trace_buf);
+        case WICED_BT_TRACE_ERROR:
+            STACK_TRACE_ERROR("%s", p_trace_buf);
+            break;
+        case WICED_BT_TRACE_WARN:
+            STACK_TRACE_WARNING("%s", p_trace_buf);
+            break;
+        case WICED_BT_TRACE_API:
+            STACK_TRACE_API("%s", p_trace_buf);
+            break;
+        case WICED_BT_TRACE_EVENT:
+            STACK_TRACE_EVENT("%s", p_trace_buf);
+            break;
+        case WICED_BT_TRACE_DEBUG:
+            STACK_TRACE_DEBUG("%s", p_trace_buf);
+            break;
+        default:
+            break;
     }
 }
 
 void host_stack_platform_interface_init(void)
 {
-    wiced_stack_platform_t host_stack_platform_if = {0};
+    wiced_bt_stack_platform_t host_stack_platform_if = {0};
     wiced_result_t result;
 
     extern void bt_post_reset_cback(void);
@@ -333,11 +330,15 @@ void host_stack_platform_interface_init(void)
     host_stack_platform_if.pf_write_sco_to_lower      = host_stack_send_sco_to_lower;
     host_stack_platform_if.pf_hci_trace_cback_t       = NULL;
     host_stack_platform_if.pf_debug_trace             = host_stack_print_trace_log;
+    host_stack_platform_if.trace_buffer               = bt_trace_buf;
+    host_stack_platform_if.trace_buffer_len           = CYBT_TRACE_BUFFER_SIZE;
     host_stack_platform_if.pf_patch_download          = bt_post_reset_cback;
+
+    memset(bt_trace_buf, 0, CYBT_TRACE_BUFFER_SIZE);
 
     cy_rtos_init_mutex(&bt_stack_mutex);
 
-    result = wiced_stack_platform_initialize(&host_stack_platform_if);
+    result = wiced_bt_stack_platform_initialize(&host_stack_platform_if);
 
     if(WICED_SUCCESS != result)
     {
@@ -347,10 +348,10 @@ void host_stack_platform_interface_init(void)
 
 void host_stack_platform_interface_deinit(void)
 {
-    wiced_stack_platform_t host_stack_platform_if = {0};
+    wiced_bt_stack_platform_t host_stack_platform_if = {0};
     wiced_result_t result;
 
-    result = wiced_stack_platform_initialize(&host_stack_platform_if);
+    result = wiced_bt_stack_platform_initialize(&host_stack_platform_if);
     
     if(WICED_SUCCESS != result)
     {

@@ -46,8 +46,6 @@
 /******************************************************************************
  *                                Constants
  ******************************************************************************/
-#define LOG_BUFF_SIZE    (128)
-
 #define HCI_SEMAPHORE_MAX_COUNT  (1)
 #define HCI_SEMAPHORE_INIT_COUNT (0)
 
@@ -316,14 +314,14 @@ void cybt_platform_set_next_timeout(uint64_t abs_tick_us_to_expire)
 
 void cybt_platform_log_print(const char *fmt_str, ...)
 {
-    char buffer[LOG_BUFF_SIZE];
+    char buffer[CYBT_TRACE_BUFFER_SIZE];
     va_list ap;
     cy_time_t time;
 
     cy_rtos_get_time(&time);
 
     va_start(ap, fmt_str);
-    vsnprintf(buffer, LOG_BUFF_SIZE, fmt_str, ap);
+    vsnprintf(buffer, CYBT_TRACE_BUFFER_SIZE, fmt_str, ap);
     va_end(ap);
 
     printf("[%lu] %s\r\n", (uint32_t)time, buffer);

@@ -27,12 +27,10 @@
 
 #include <stdio.h>
 
-/*****************************************************************************
- *
+/**
  * ENABLE the below definition CYBT_PLATFORM_TRACE_ENABLE to have logging
  * functionality by using trace marcos in this file.
- *
- *****************************************************************************/
+ */
 //#define CYBT_PLATFORM_TRACE_ENABLE
 
 
@@ -54,6 +52,9 @@
 /*****************************************************************************
  *                             Type Definitions
  ****************************************************************************/
+/**
+ * trace category id
+ */
 #define CYBT_TRACE_ID_MAIN         (0)
 #define CYBT_TRACE_ID_SPIF         (1)
 #define CYBT_TRACE_ID_BT_TASK      (2)
@@ -68,6 +69,9 @@
 #define CYBT_TRACE_ID_ALL          (0xFF)
 typedef uint8_t cybt_trace_id_t;
 
+/**
+ * trace level
+ */
 #define CYBT_TRACE_LEVEL_NONE      (0)
 #define CYBT_TRACE_LEVEL_ERROR     (1)
 #define CYBT_TRACE_LEVEL_WARNING   (2)
@@ -77,6 +81,9 @@ typedef uint8_t cybt_trace_id_t;
 #define CYBT_TRACE_LEVEL_MAX       (6)
 typedef uint8_t cybt_trace_level_t;
 
+/**
+ * trace control block
+ */
 typedef struct
 {
     uint8_t  trace_level[CYBT_TRACE_ID_MAX];
@@ -158,6 +165,14 @@ extern void cybt_platform_log_print(const char *fmt_str, ...);
 /*****************************************************************************
  *                           Function Declarations
  ****************************************************************************/
+/**
+ * Set the trace level for trace categories id.
+ *
+ * @param[in]       id    : trace id, CYBT_TRACE_ID_ALL for all categories
+ * @param[in]       level : trace level
+ *
+ * @returns         void
+ */
 void cybt_platform_set_trace_level(cybt_trace_id_t                id,
                                                cybt_trace_level_t level
                                              );

@@ -56,7 +56,6 @@
  *****************************************************************************/
 typedef struct
 {
-    uint32_t                      stack_heap_size;
     wiced_bt_management_cback_t   *p_app_management_callback;
     const cybt_platform_config_t  *p_bt_platform_cfg;
     bool                          is_sleep_mode_enabled;
@@ -176,11 +175,10 @@ wiced_bool_t wiced_stack_event_handler_cback (uint8_t *p_event)
 void cybt_core_stack_init(void)
 {
     /* Start the stack */
-    wiced_stack_init_internal(cybt_main_cb.p_app_management_callback,
-                              wiced_post_stack_init_cback,
-                              wiced_stack_event_handler_cback,
-                              cybt_main_cb.stack_heap_size
-                             );
+    wiced_bt_stack_init_internal(cybt_main_cb.p_app_management_callback,
+                                 wiced_post_stack_init_cback,
+                                 wiced_stack_event_handler_cback
+                                );
 }
 
 wiced_result_t wiced_bt_stack_init(wiced_bt_management_cback_t *p_bt_management_cback,
@@ -198,8 +196,7 @@ wiced_result_t wiced_bt_stack_init(wiced_bt_management_cback_t *p_bt_management_
     host_stack_platform_interface_init();
 
     /* Configure the stack */
-    wiced_set_stack_config(p_bt_cfg_settings);
-    cybt_main_cb.stack_heap_size = p_bt_cfg_settings->stack_scratch_size ? p_bt_cfg_settings->stack_scratch_size : 2000;
+    wiced_bt_set_stack_config(p_bt_cfg_settings);
 
     cybt_platform_task_init();
 

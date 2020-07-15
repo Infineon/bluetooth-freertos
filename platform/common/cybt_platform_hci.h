@@ -30,13 +30,18 @@
 /******************************************************************************
  *                                Constants
  ******************************************************************************/
-#define HCI_UART_TYPE_HEADER_SIZE  (1)
-#define HCI_UART_DEFAULT_BAUDRATE  (115200)
+#define HCI_UART_TYPE_HEADER_SIZE  (1)         /**< HCI UART header size */
+#define HCI_UART_DEFAULT_BAUDRATE  (115200)    /**< HCI UART default controller 
+                                               *    baudrate
+                                               */
 
 
 /*****************************************************************************
  *                           Type Definitions
  *****************************************************************************/
+/**
+ * HCI packet type
+ */
 typedef enum
 {
     HCI_PACKET_TYPE_IGNORE   = 0x00,
@@ -47,24 +52,36 @@ typedef enum
     HCI_PACKET_TYPE_LOOPBACK = 0xFF
 } hci_packet_type_t;
 
+/**
+ * HCI Event packet header
+ */
 typedef struct
 {
     uint8_t           event_code;
     uint8_t           content_length;
 } hci_event_packet_header_t;
 
+/**
+ * HCI ACL packet header
+ */
 typedef struct
 {
     uint16_t          hci_handle;
     uint16_t          content_length;
 } hci_acl_packet_header_t;
 
+/**
+ * HCI SCO packet header
+ */
 typedef struct
 {
     uint16_t          hci_handle;
     uint8_t           content_length;
 } hci_sco_packet_header_t;
 
+/**
+ * HCI Loopback packet header
+ */
 typedef struct
 {
     uint8_t           content_length;
@@ -80,14 +97,16 @@ extern "C"
  *                           Function Declarations
  ****************************************************************************/
 
-/** Initialize and open HCI transport.
+/**
+ * Initialize and open HCI transport.
  *
  * @return the status of open operation
  */
 cybt_result_t cybt_platform_hci_open(void);
 
 
-/** Set the new baudrate of HCI UART trasnport.
+/**
+ * Set the new baudrate of HCI UART trasnport.
  *
  * @param[in] req_size: the requested size of memory
  *
@@ -96,7 +115,8 @@ cybt_result_t cybt_platform_hci_open(void);
 cybt_result_t cybt_platform_hci_set_baudrate(uint32_t baudrate);
 
 
-/** Write data to HCI transport.
+/**
+ * Write data to HCI transport.
  *
  * Note: This fuction shall be returned only when all data was written done.
  *
@@ -112,7 +132,8 @@ cybt_result_t cybt_platform_hci_write(hci_packet_type_t type,
                                                  );
 
 
-/** Read data from HCI transpot.
+/**
+ * Read data from HCI transpot.
  *
  * @param[in] type  : HCI packet type
  * @param[in] p_data: the pointer of received buffer
@@ -133,7 +154,8 @@ cybt_result_t cybt_platform_hci_read(hci_packet_type_t type,
                                                );
 
 
-/** Close HCI transport.
+/**
+ * Close HCI transport.
  *
  * @returns the status of close operation
  */

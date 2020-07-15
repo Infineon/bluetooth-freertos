@@ -71,23 +71,34 @@
 /*****************************************************************************
  *                           Type Definitions
  *****************************************************************************/
+/**
+ * BT HCI incoming data ready event
+ */
 #define BT_EVT_TO_HCI_DATA_READY_UNKNOWN   (BT_EVT_HCI_DATA_READY_BASE + 0)
 #define BT_EVT_TO_HCI_DATA_READY_ACL       (BT_EVT_HCI_DATA_READY_BASE + 1)
 #define BT_EVT_TO_HCI_DATA_READY_SCO       (BT_EVT_HCI_DATA_READY_BASE + 2)
 #define BT_EVT_TO_HCI_DATA_READY_EVT       (BT_EVT_HCI_DATA_READY_BASE + 3)
 typedef uint16_t bt_task_event_t;
 
-// Message structure is used to communicate between tasks
+/**
+ * Message structure is used to communicate between tasks
+ */
 typedef struct
 {
-    bt_task_event_t  event;
-    uint16_t         length;
+    bt_task_event_t  event;    /**< event id */
+    uint16_t         length;   /**< payload length */
 } BT_MSG_HDR;
 
+/**
+ * Message header size
+ */
 #define BT_MSG_HDR_SIZE             (sizeof(BT_MSG_HDR))
 
 extern cy_queue_t  cybt_task_queue[];
 
+/**
+ * Task queue related declaration
+ */
 #define BTU_TASK_QUEUE              (cybt_task_queue[BT_TASK_ID_BTU])
 #define HCI_TASK_QUEUE              (cybt_task_queue[BT_TASK_ID_HCI])
 
@@ -105,7 +116,8 @@ extern "C"
  *                           Function Declarations
  ****************************************************************************/
 
-/** This function is used to initialize Bluetooth related OS tasks.
+/**
+ * Initialize Bluetooth related OS tasks.
  *
  * @returns  CYBT_SUCCESS
  *           CYBT_ERR_INIT_MEMPOOL_FAILED
@@ -115,7 +127,8 @@ extern "C"
 cybt_result_t cybt_platform_task_init(void);
 
 
-/** This function is used to delete Bluetooth related OS tasks.
+/**
+ * Delete Bluetooth related OS tasks.
  *
  * @returns  CYBT_SUCCESS
  *           CYBT_ERR_OUT_OF_MEMORY
@@ -124,7 +137,8 @@ cybt_result_t cybt_platform_task_init(void);
 cybt_result_t cybt_platform_task_deinit(void);
 
 
-/** This function is used to initialize task memory pool.
+/**
+ * Initialize task memory pool.
  *
  * @param[in] total_size: the request size of memory pool
  *
@@ -135,7 +149,8 @@ cybt_result_t cybt_platform_task_deinit(void);
 cybt_result_t cybt_platform_task_mempool_init(uint32_t total_size);
 
 
-/** This function is used to allocate the memory block from task memory pool.
+/**
+ * Allocate the memory block from task memory pool.
  *
  * @param[in] req_size: the request size of memory block
  *
@@ -145,28 +160,30 @@ cybt_result_t cybt_platform_task_mempool_init(uint32_t total_size);
 void *cybt_platform_task_mempool_alloc(uint32_t req_size);
 
 
-/** This function is used to free and return the memory block to task memory
- *  pool.
+/**
+ * Free and return the memory block to task memory pool.
  *
- * @param[in] p_mem_block: the pointer of memory block
+ * @param[in]   p_mem_block: the pointer of memory block
  *
- * @returns
+ * @returns     void
  *
  */
 void cybt_platform_task_mempool_free(void *p_mem_block);
 
 
-/** This function is used to release task memory pool.
+/**
+ * Release task memory pool.
  *
- * @returns
+ * @returns     void
  */
 void cybt_platform_task_mempool_deinit(void);
 
 
-/** This function is used to send message to BT task.
+/**
+ * Send message to BT task.
  *
- * @param[in] p_bt_msg: the pointer of the message
- * @param[in] is_from_isr: true if this function is called from isr context
+ * @param[in] p_bt_msg    : the pointer of the message
+ * @param[in] is_from_isr : true if this function is called from isr context
  *                         otherwise false
  *
  * @returns  CYBT_SUCCESS
@@ -179,10 +196,11 @@ cybt_result_t cybt_send_msg_to_bt_task(BT_MSG_HDR *p_bt_msg,
                                                   );
 
 
-/** This function is used to send message to HCI task.
+/**
+ * Send message to HCI task.
  *
- * @param[in] p_bt_msg: the pointer of the message
- * @param[in] is_from_isr: true if this function is called from isr context
+ * @param[in] p_bt_msg    : the pointer of the message
+ * @param[in] is_from_isr : true if this function is called from isr context
  *                         otherwise false
  *
  * @returns  CYBT_SUCCESS
@@ -194,11 +212,12 @@ cybt_result_t cybt_send_msg_to_hci_task(BT_MSG_HDR *p_bt_msg,
                                                     );
 
 
-/** This function is used to get the usage rate of task message queue.
+/**
+ * Get the usage rate of task message queue.
  *
- * @param[in] task_id: the task id to query
+ * @param[in]  task_id: the task id to query
  *
- * @returns true : the utilization in percentage
+ * @returns    the utilization in percentage
  */
 uint8_t cybt_platform_task_queue_utilization(uint8_t task_id);
 

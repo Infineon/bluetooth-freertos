@@ -55,6 +55,12 @@
 #include "cyhal_lptimer.h"
 
 
+/******************************************************************************
+ *                                Constants
+ ******************************************************************************/
+#define  CYBT_TRACE_BUFFER_SIZE    (128)
+
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -64,26 +70,29 @@ extern "C"
  *                           Function Declarations
  *****************************************************************************/
 
-/** The first platform-port function to be invoked. Initialization for
- *  everything (e.g. os components, peripheral driver, timer, etc.) can
- *  be put inside this function.
+/**
+ * The first platform-port function to be invoked. Initialization for
+ * everything (e.g. os components, peripheral driver, timer, etc.) can
+ * be put inside this function.
  *
- * @returns
+ * @returns  void
  */
 void cybt_platform_init(void);
 
 
-/** The platform-port function which is used to de-initialization all
- *  the components (e.g. os components, peripheral driver, timer, etc.) which
- *  had been intialized for Bluetooth.
- *  It will be invoked when BT stack shutdown API is called.
+/**
+ * The platform-port function which is used to de-initialization all
+ * the components (e.g. os components, peripheral driver, timer, etc.) which
+ * had been intialized for Bluetooth.
+ * It will be invoked when BT stack shutdown API is called.
  *
- * @returns
+ * @returns  void
  */
 void cybt_platform_deinit(void);
 
 
-/** Get memory via OS malloc function.
+/**
+ * Get memory via OS malloc function.
  *
  * @param[in] req_size: the requested size of memory
  *
@@ -92,57 +101,63 @@ void cybt_platform_deinit(void);
 void *cybt_platform_malloc(uint32_t req_size);
 
 
-/** Return memory to OS via OS free function.
+/**
+ * Return memory to OS via OS free function.
  *
  * @param[in] p_mem_block: the pointer of memory block which was allocated
  *                          by cybt_platform_malloc() function.
  *
- * @return
+ * @return  void
  */
 void cybt_platform_free(void *p_mem_block);
 
 
-/** Disable system interrupt.
+/**
+ * Disable system interrupt.
  *
- * @return
+ * @return  void
  */
 void cybt_platform_disable_irq(void);
 
 
-/** Enable system interrupt.
+/**
+ * Enable system interrupt.
  *
- * @return
+ * @return  void
  */
 void cybt_platform_enable_irq(void);
 
 
-/** Log printing function. It will be invoked whenever stack has log output.
+/**
+ * Log printing function. It will be invoked whenever stack has log output.
  * In this function these logs can be forwarded to UART, log task, file system,
  * or somewhere else, depends on the implementation.
  *
- * @param[in] trace_id: the id identifies which components the log comes from
  * @param[in] fmt_str :  output trace string
  *
- * @return
+ * @return  void
  */
 void cybt_platform_log_print(const char *fmt_str, ...);
 
 
-/** This function is used to prevent the system from entering sleep mode.
+/**
+ * Prevent the system from entering sleep mode.
  *
- * @return
+ * @return  void
  */
 void cybt_platform_sleep_lock(void);
 
 
-/** This function is used to allow the system to enter sleep mode.
+/**
+ * Allow the system to enter sleep mode.
  *
- * @return
+ * @return void
  */
 void cybt_platform_sleep_unlock(void);
 
 
-/** This function is used by BT stack to get current tick count.
+/**
+ * This function is used by BT stack to get current tick count.
  *  The unit is micro-second.
  *
  * @return the current tick count in micro-second
@@ -150,10 +165,9 @@ void cybt_platform_sleep_unlock(void);
 uint64_t cybt_platform_get_tick_count_us(void);
 
 
-/** This function is used by BT stack to set next timeout in absolute tick 
- *  count in micro-second.
- * In this function these logs can be forwarded to UART, log task, file system,
- * or somewhere else, depends on the implementation.
+/**
+ * This function is used by BT stack to set next timeout in absolute tick 
+ * count in micro-second.
  *
  * @param[in] abs_tick_us_to_expire: absolute tick count in micro-second to be expired
  *

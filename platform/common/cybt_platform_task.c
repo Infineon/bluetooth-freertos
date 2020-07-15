@@ -163,19 +163,19 @@ cybt_result_t cybt_platform_task_deinit(void)
 
 cybt_result_t cybt_platform_task_mempool_init(uint32_t total_size)
 {
-    wiced_bt_heap_t *p_heap = NULL;
+    void *p_heap_mem = NULL;
 
     MEM_TRACE_DEBUG("task_mempool_init(): size = %d", total_size);
 
-    gp_task_heap = (wiced_bt_heap_t *)cybt_platform_malloc(total_size);
-    p_heap = wiced_bt_create_heap("CYBT_TASK_POOL",
-                                  gp_task_heap,
-                                  total_size,
-                                  NULL,
-                                  WICED_FALSE
-                                 );
+    p_heap_mem = (wiced_bt_heap_t *)cybt_platform_malloc(total_size);
+    gp_task_heap = wiced_bt_create_heap("CYBT_TASK_POOL",
+                                        p_heap_mem,
+                                        total_size,
+                                        NULL,
+                                        WICED_FALSE
+                                       );
 
-    if(NULL == p_heap)
+    if(NULL == gp_task_heap)
     {
         MEM_TRACE_ERROR("task_mempool_init(): Create heap failed");
         return CYBT_ERR_OUT_OF_MEMORY;
@@ -222,6 +222,7 @@ void cybt_platform_task_mempool_deinit(void)
 {
     MEM_TRACE_DEBUG("task_mempool_deinit()");
 
+    wiced_bt_delete_heap(gp_task_heap);
     cybt_platform_free(gp_task_heap);
     gp_task_heap = NULL;
 }

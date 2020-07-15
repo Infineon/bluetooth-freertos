@@ -36,7 +36,8 @@ extern "C"
  *                           Function Declarations
  ****************************************************************************/
 
-/** This function is used to get platform config structure.
+/**
+ * Get platform configuration structure.
  *
  * @returns  the pointer of platform config structure.
  *
@@ -44,7 +45,8 @@ extern "C"
 const cybt_platform_config_t* cybt_platform_get_config(void);
 
 
-/** This function is used to get current status of sleep mode.
+/**
+ * Get current status of sleep mode.
  *
  * @returns  true : bt sleep mode is already enabled
  *           false: bt sleep mode is disabled

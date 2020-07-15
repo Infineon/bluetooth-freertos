@@ -1,4 +1,4 @@
-### Cypress WICED BT/BLE Host Stack solution
+﻿### Cypress WICED BT/BLE Host Stack solution
 Cypress WICED BT/BLE stack provides Bluetooth functionality with high performance and less resource consumption. It targets on IoT products, especially for embedded devices.
 
 ### What's Included?
@@ -7,6 +7,11 @@ This release of Cypress WICED BT/BLE stack solution package includes as followin
 * WICED BLE stack library and API headers (by btstack.lib)
 * Platform and Operation System porting layer
 
+
+#### v1.2.0
+* Support WICED Bluetooth stack version 1.4
+* Cypress Bluetooth chip 43438 support
+* CLib FreeRTOS support
 
 #### v1.1.0
 * Cypress Bluetooth chip 43012 support

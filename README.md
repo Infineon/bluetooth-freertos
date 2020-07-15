@@ -1,12 +1,12 @@
-# Cypress WICED BT/BLE Host Stack solution (for FreeRTOS)
+# WICED Bluetooth Host Stack solution (for FreeRTOS)
 
 ## Overview
-Cypress WICED BT/BLE host stack solution includes bluetooth stack library,
+WICED Bluetooth host stack solution includes bluetooth stack library,
 bluetooth controller firmware and platform/os porting layer. Bluetooth stack library
 is designed for embedded device, it consumes less RAM/ROM usage but still keeps
 high performance. With WICED Bluetooth API set, application developers can use them
 easily to create their own application. The porting layer is implemented by CYHAL and CY_RTOS_AL
-(Cypress Adaptation Layer), hence it can adapt to Cypress platforms, and easy to 
+(Hardware/Operation System Adaptation Layer), hence it can adapt to Cypress platforms, and easy to 
 port to other vendor's platform.  
 
 ## Platform HCI transport config
@@ -20,6 +20,8 @@ for more detail:
 The API **cybt_platform_config_init( )** shall be invoked prior to 
 **wiced_bt_stack_init( )**
 
-    
+## API Reference Manual
+ - [Bluetooth platform API manual](https://cypresssemiconductorco.github.io/bluetooth-freertos/api_reference_manual/html/index.html)
+ - [Bluetooth stack API manual](https://cypresssemiconductorco.github.io/btstack/api_reference_manual/html/index.html)
     
 © Cypress Semiconductor Corporation, 2020.
