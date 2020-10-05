@@ -32,6 +32,6 @@ The API **cybt_platform_config_init( )** shall be invoked prior to
 
 ## API Reference Manual
  - [Bluetooth platform API manual](https://cypresssemiconductorco.github.io/bluetooth-freertos/api_reference_manual/html/index.html)
- - [Bluetooth stack API manual](https://cypresssemiconductorco.github.io/btstack/api_reference_manual/html/index.html)
+ - [Bluetooth stack BLE API manual](https://cypresssemiconductorco.github.io/btstack/ble/api_reference_manual/html/index.html)
     
 © Cypress Semiconductor Corporation, 2020.
