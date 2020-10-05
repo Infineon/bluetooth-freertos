@@ -28,25 +28,29 @@
 #include <stdio.h>
 
 /**
+ *  @addtogroup    platform_trace   Bluetooth Platform Trace
+ *
  * ENABLE the below definition CYBT_PLATFORM_TRACE_ENABLE to have logging
  * functionality by using trace marcos in this file.
+ *
+ *  @{
  */
-//#define CYBT_PLATFORM_TRACE_ENABLE
+#define CYBT_PLATFORM_TRACE_ENABLE
 
 
 /*****************************************************************************
  *                                Constants
  ****************************************************************************/
-#define INITIAL_TRACE_LEVEL_MAIN          (CYBT_TRACE_LEVEL_DEBUG)
-#define INITIAL_TRACE_LEVEL_SPIF          (CYBT_TRACE_LEVEL_DEBUG)
-#define INITIAL_TRACE_LEVEL_BT_TASK       (CYBT_TRACE_LEVEL_DEBUG)
-#define INITIAL_TRACE_LEVEL_HCI_TASK      (CYBT_TRACE_LEVEL_DEBUG)
-#define INITIAL_TRACE_LEVEL_HCI_DRV       (CYBT_TRACE_LEVEL_DEBUG)
-#define INITIAL_TRACE_LEVEL_HCI_LOG       (CYBT_TRACE_LEVEL_DEBUG)
-#define INITIAL_TRACE_LEVEL_MEMORY        (CYBT_TRACE_LEVEL_DEBUG)
-#define INITIAL_TRACE_LEVEL_PRM           (CYBT_TRACE_LEVEL_DEBUG)
-#define INITIAL_TRACE_LEVEL_STACK         (CYBT_TRACE_LEVEL_DEBUG)
-#define INITIAL_TRACE_LEVEL_APP           (CYBT_TRACE_LEVEL_DEBUG)
+#define INITIAL_TRACE_LEVEL_MAIN          (CYBT_TRACE_LEVEL_ERROR)
+#define INITIAL_TRACE_LEVEL_SPIF          (CYBT_TRACE_LEVEL_ERROR)
+#define INITIAL_TRACE_LEVEL_BT_TASK       (CYBT_TRACE_LEVEL_ERROR)
+#define INITIAL_TRACE_LEVEL_HCI_TASK      (CYBT_TRACE_LEVEL_ERROR)
+#define INITIAL_TRACE_LEVEL_HCI_DRV       (CYBT_TRACE_LEVEL_ERROR)
+#define INITIAL_TRACE_LEVEL_HCI_LOG       (CYBT_TRACE_LEVEL_ERROR)
+#define INITIAL_TRACE_LEVEL_MEMORY        (CYBT_TRACE_LEVEL_ERROR)
+#define INITIAL_TRACE_LEVEL_PRM           (CYBT_TRACE_LEVEL_ERROR)
+#define INITIAL_TRACE_LEVEL_STACK         (CYBT_TRACE_LEVEL_ERROR)
+#define INITIAL_TRACE_LEVEL_APP           (CYBT_TRACE_LEVEL_ERROR)
 
 
 /*****************************************************************************
@@ -86,7 +90,7 @@ typedef uint8_t cybt_trace_level_t;
  */
 typedef struct
 {
-    uint8_t  trace_level[CYBT_TRACE_ID_MAX];
+    uint8_t  trace_level[CYBT_TRACE_ID_MAX];    /**< BT trace level */
 } cybt_platform_trace_cb_t;
 
 
@@ -243,6 +247,8 @@ void cybt_platform_set_trace_level(cybt_trace_id_t                id,
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
+/**@} */
 
 #endif
 

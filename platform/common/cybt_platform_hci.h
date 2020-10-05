@@ -162,6 +162,18 @@ cybt_result_t cybt_platform_hci_read(hci_packet_type_t type,
 cybt_result_t cybt_platform_hci_close(void);
 
 
+/**
+ * Control HCI RX data indication interrupt .
+ *
+ * Note: This fuction shall be returned only when all data was written done.
+ *
+ * @param[in] enable  : enable or disable the interrupt
+ *
+ * @returns
+ */
+void cybt_platform_hci_irq_rx_data_ind(bool enable);
+
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

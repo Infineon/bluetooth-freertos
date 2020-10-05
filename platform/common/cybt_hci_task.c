@@ -47,6 +47,7 @@
 
 #define IS_HCI_RX_READY_EVT(evt)   (((evt & 0xFFFFFFFC) ^ BT_EVT_HCI_DATA_READY_BASE)? false: true)
 
+#define HCI_MAX_READ_PACKET_NUM_PER_ROUND   (10)
 
 /******************************************************************************
  *                           Variables Definitions
@@ -376,35 +377,40 @@ void handle_hci_rx_data_ready(hci_packet_type_t hci_packet_type)
 
     if(CYBT_HCI_UART == p_bt_platform_cfg->hci_config.hci_transport)
     {
-        read_len = 1;
-        result = cybt_platform_hci_read(HCI_PACKET_TYPE_IGNORE,
-                                        (uint8_t *) &hci_packet_type,
-                                        &read_len,
-                                        0
-                                       );
-        if(CYBT_SUCCESS != result || 0 == read_len)
-        {
-            // No data is read from UART FIFO
-            return;
-        }
-    }
+        uint8_t count = 0;
 
-    switch(hci_packet_type)
-    {
-        case HCI_PACKET_TYPE_ACL:
-            handle_hci_rx_acl();
-            break;
-        case HCI_PACKET_TYPE_EVENT:
-            handle_hci_rx_event();
-            break;
-        case HCI_PACKET_TYPE_SCO:
-            handle_hci_rx_sco();
-            break;
-        default:
-            HCITASK_TRACE_ERROR("handle_hci_rx_data_ready(): unkown type (0x%02x)",
-                                hci_packet_type
-                               );
-            break;
+        for(; count < HCI_MAX_READ_PACKET_NUM_PER_ROUND; count++)
+        {
+            read_len = 1;
+            result = cybt_platform_hci_read(HCI_PACKET_TYPE_IGNORE,
+                                            (uint8_t *) &hci_packet_type,
+                                            &read_len,
+                                            0
+                                           );
+            if(CYBT_SUCCESS != result || 0 == read_len)
+            {
+                // No data is read from UART FIFO
+                return;
+            }
+    
+            switch(hci_packet_type)
+            {
+                case HCI_PACKET_TYPE_ACL:
+                    handle_hci_rx_acl();
+                    break;
+                case HCI_PACKET_TYPE_EVENT:
+                    handle_hci_rx_event();
+                    break;
+                case HCI_PACKET_TYPE_SCO:
+                    handle_hci_rx_sco();
+                    break;
+                default:
+                    HCITASK_TRACE_ERROR("handle_hci_rx_data_ready(): unkown type (0x%02x)",
+                                        hci_packet_type
+                                       );
+                break;
+            }
+        }
     }
 }
 
@@ -456,6 +462,7 @@ void cybt_hci_task(cy_thread_arg_t arg)
                     break;
             }
 
+            cybt_platform_hci_irq_rx_data_ind(true);
             continue;
         }
 
@@ -496,6 +503,7 @@ void cybt_hci_task(cy_thread_arg_t arg)
                 break;
         }
     }
+    cy_rtos_exit_thread();
 }
 
 

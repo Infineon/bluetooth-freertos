@@ -7,6 +7,9 @@ This release of Cypress WICED BT/BLE stack solution package includes as followin
 * WICED BLE stack library and API headers (by btstack.lib)
 * Platform and Operation System porting layer
 
+#### v1.3.0
+* Fixed Co-Existence Security Vulnerabilities
+* Support WICED Bluetooth stack version 1.5
 
 #### v1.2.0
 * Support WICED Bluetooth stack version 1.4

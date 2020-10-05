@@ -99,6 +99,13 @@ $(document).ready(function(){initNavTree('index.html','');});
 <li>API <b><a class="el" href="group__platform__cfg.html#ga1ff2a9935b27efb9639974d6ddc1894a" title="Configurate the Bluetotoh platform specific settings.">cybt_platform_config_init( )</a></b></li>
 </ul>
 <p>The API <b><a class="el" href="group__platform__cfg.html#ga1ff2a9935b27efb9639974d6ddc1894a" title="Configurate the Bluetotoh platform specific settings.">cybt_platform_config_init( )</a></b> shall be invoked prior to <b>wiced_bt_stack_init( )</b></p>
+<h2>How to enable trace log?</h2>
+<ul>
+<li>Compile time definition: Please refer to cybt_platform_config.h which can set individual trace log (Default set all category is CYBT_TRACE_LEVEL_ERROR)</li>
+<li>Run time update: Dynamic set trace level by using API <b><a class="el" href="group__platform__trace.html#gacff449b9b47250c93eb680a49129d9ec" title="Set the trace level for trace categories id.">cybt_platform_set_trace_level( )</a></b></li>
+<li>Enable libbtstack.a trace or use <code>WICED_BT_TRACE</code> macro, please set <code>CYBT_TRACE_ID_STACK</code> category which be invoked prior to <b>host_stack_platform_interface_init( )</b>, and can not used after <b>host_stack_platform_interface_deinit( )</b></li>
+<li>Undefined <code>CYBT_PLATFORM_TRACE_ENABLE</code> to disables all the debug log messages <div class="fragment"><div class="line">//#define CYBT_PLATFORM_TRACE_ENABLE</div></div><!-- fragment --></li>
+</ul>
 <h2>API Reference Manual</h2>
 <ul>
 <li><a href="https://cypresssemiconductorco.github.io/bluetooth-freertos/api_reference_manual/html/index.html">Bluetooth platform API manual</a></li>

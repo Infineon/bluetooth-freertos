@@ -49,6 +49,7 @@ uint32_t bt_task_dropped_packet_cnt = 0;
  *                          Function Declarations
  ******************************************************************************/
 extern void cybt_core_stack_init(void);
+extern void host_stack_platform_interface_deinit(void);
 
 
 /******************************************************************************
@@ -76,7 +77,7 @@ cybt_result_t cybt_send_msg_to_bt_task(BT_MSG_HDR *p_bt_msg,
 
             if(false == is_from_isr)
             {
-                BTTASK_TRACE_ERROR("send_msg_to_bt_task(): almost full (usage = %d\%), drop count = %d",
+                BTTASK_TRACE_ERROR("send_msg_to_bt_task(): almost full (usage = %d%%), drop count = %d",
                                    util_in_percentage,
                                    bt_task_dropped_packet_cnt
                                   );
@@ -146,6 +147,7 @@ void cybt_bt_task(cy_thread_arg_t arg)
                 cybt_platform_task_mempool_free((void *) p_bt_msg);
             }
             cy_rtos_deinit_queue(&BTU_TASK_QUEUE);
+            wiced_bt_stack_shutdown();
             break;
         }
 
@@ -171,6 +173,9 @@ void cybt_bt_task(cy_thread_arg_t arg)
 
         cybt_platform_task_mempool_free(p_bt_msg);
     }
+
+    host_stack_platform_interface_deinit();
+    cy_rtos_exit_thread();
 }
 
 

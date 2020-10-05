@@ -3,6 +3,10 @@ var NAVTREEINDEX0 =
 "group__platform__cfg.html":[1,0],
 "group__platform__cfg.html#ga1ff2a9935b27efb9639974d6ddc1894a":[1,0,6],
 "group__platform__cfg.html#ga5f6850727c86459c4c6c11c84870d308":[1,0,5],
+"group__platform__trace.html":[1,1],
+"group__platform__trace.html#ga7171cf6d4882d16a4f8095996de39ab2":[1,1,1],
+"group__platform__trace.html#ga9606ce68152dd02a9f27798d2d68c329":[1,1,2],
+"group__platform__trace.html#gacff449b9b47250c93eb680a49129d9ec":[1,1,3],
 "index.html":[],
 "index.html":[0],
 "modules.html":[1],
@@ -34,5 +38,7 @@ var NAVTREEINDEX0 =
 "structcybt__platform__config__t.html":[1,0,4],
 "structcybt__platform__config__t.html#a0ed2b4e529564a9210e5d80c4e59b4bd":[1,0,4,1],
 "structcybt__platform__config__t.html#a31c8f2a35e4006fef44c65bb7dea5d4e":[1,0,4,2],
-"structcybt__platform__config__t.html#a5ed1a8d945e1ed12a4181df867d41dc7":[1,0,4,0]
+"structcybt__platform__config__t.html#a5ed1a8d945e1ed12a4181df867d41dc7":[1,0,4,0],
+"structcybt__platform__trace__cb__t.html":[1,1,0],
+"structcybt__platform__trace__cb__t.html#aff6cbe7223f753c87f870ff5cab4333d":[1,1,0,0]
 };

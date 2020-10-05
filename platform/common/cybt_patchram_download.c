@@ -64,7 +64,7 @@ typedef struct
 /******************************************************************************
  *                           Variables Definitions
  ******************************************************************************/
-bt_fw_download_cb bt_fwdl_cb = {0};
+bt_fw_download_cb bt_fwdl_cb = {.state = BT_POST_RESET_STATE_IDLE};
 
 extern const char    brcm_patch_version[];
 extern const uint8_t brcm_patchram_buf[];

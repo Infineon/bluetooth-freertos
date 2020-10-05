@@ -71,7 +71,6 @@ cybt_platform_main_cb_t cybt_main_cb = {0};
  *                          Function Declarations
  ******************************************************************************/
 extern void host_stack_platform_interface_init(void);
-extern void host_stack_platform_interface_deinit(void);
 
 
 /******************************************************************************
@@ -206,14 +205,6 @@ wiced_result_t wiced_bt_stack_init(wiced_bt_management_cback_t *p_bt_management_
 wiced_result_t wiced_bt_stack_deinit( void )
 {
     cybt_platform_task_deinit();
-
-    host_stack_platform_interface_deinit();
-
-    if(cybt_main_cb.p_app_management_callback)
-    {
-        cybt_main_cb.p_app_management_callback(BTM_DISABLED_EVT, NULL);
-    }
-    cybt_main_cb.p_app_management_callback = NULL;
 
     cybt_platform_deinit();
 

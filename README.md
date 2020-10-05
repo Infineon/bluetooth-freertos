@@ -1,4 +1,4 @@
-# WICED Bluetooth Host Stack solution (for FreeRTOS)
+﻿# WICED Bluetooth Host Stack solution (for FreeRTOS)
 
 ## Overview
 WICED Bluetooth host stack solution includes bluetooth stack library,
@@ -16,9 +16,19 @@ for more detail:
 
 *  structure **cybt_platform_config_t**
 *  API **cybt_platform_config_init( )**
-  
+
 The API **cybt_platform_config_init( )** shall be invoked prior to 
 **wiced_bt_stack_init( )**
+
+## How to enable trace log?
+*  Compile time definition: Please refer to cybt_platform_config.h which can set individual trace log (Default set all category is CYBT_TRACE_LEVEL_ERROR)
+*  Run time update: Dynamic set trace level by using API **cybt_platform_set_trace_level( )**
+*  Enable libbtstack.a trace or use `WICED_BT_TRACE` macro, please set `CYBT_TRACE_ID_STACK` category which be invoked prior to **host_stack_platform_interface_init( )**,
+   and can not used after **host_stack_platform_interface_deinit( )**   
+*  Undefined `CYBT_PLATFORM_TRACE_ENABLE` to disables all the debug log messages
+  ```
+  //#define CYBT_PLATFORM_TRACE_ENABLE
+  ```
 
 ## API Reference Manual
  - [Bluetooth platform API manual](https://cypresssemiconductorco.github.io/bluetooth-freertos/api_reference_manual/html/index.html)
