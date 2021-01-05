@@ -36,49 +36,67 @@
 /*****************************************************************************
  *                                Constants
  *****************************************************************************/
-#define BT_TASK_ID_BTU                     (0)
-#define BT_TASK_ID_HCI                     (1)
-#define BT_TASK_NUM                        (2)
+#define BT_TASK_ID_HCI_RX                   (0)
+#define BT_TASK_ID_HCI_TX                   (1)
+#define BT_TASK_NUM                         (2)
 
-#define BT_TASK_NAME_BTU                    "CYBT_BT_Task"
-#define BT_TASK_NAME_HCI                    "CYBT_HCI_Task"
+#define BT_TASK_NAME_HCI_RX                 "CYBT_HCI_RX_Task"
+#define BT_TASK_NAME_HCI_TX                 "CYBT_HCI_TX_Task"
 
-#define BT_EVT_TO_BTU_EVENT                 (0x0201)
-#define BT_EVT_TO_BTU_ACL                   (0x0202)
-#define BT_EVT_TO_BTU_SCO                   (0x0203)
-#define BT_EVT_TO_BTU_TIMER                 (0x0204)
+#define HCI_TX_TASK_PRIORITY                (CY_RTOS_PRIORITY_HIGH)
+#define HCI_RX_TASK_PRIORITY                (CY_RTOS_PRIORITY_HIGH)
 
-#define BT_EVT_TO_HCI_COMMAND               (0x0401)
-#define BT_EVT_TO_HCI_ACL                   (0x0402)
-#define BT_EVT_TO_HCI_SCO                   (0x0403)
-#define BT_EVT_TO_HCI_TIMER                 (0x0404)
-#define BT_EVT_TO_HCI_DATA_READY            (0x0405)
+#define HCI_RX_TASK_STACK_SIZE              (0x1000)
+#define HCI_TX_TASK_STACK_SIZE              (0x1000)
 
-#define BT_EVT_TASK_SHUTDOWN                (0xDAFFFFFF)
+#define CYBT_INVALID_HEAP_UTILIZATION       (0xFF)
+#define CYBT_INVALID_QUEUE_UTILIZATION      (0xFF)
 
-#define BT_EVT_HCI_DATA_READY_BASE          (0xDAAEADFC)
-
-#define BTU_TASK_PRIORITY                   (CY_RTOS_PRIORITY_ABOVENORMAL)
-#define HCI_TASK_PRIORITY                   (CY_RTOS_PRIORITY_HIGH)
-
-#define BTU_TASK_STACK_SIZE                 (0x1800)
-#define HCI_TASK_STACK_SIZE                 (0x1000)
-
-#define  CYBT_TASK_DEFAULT_POOL_SIZE        (2048)
-
-#define  CYBT_INVALID_QUEUE_UTILIZATION     (0xFF)
+#define HCI_TX_UNLOCK_THRESHOLD_TX_HEAP_IN_PERCENT    (50)
+#define HCI_TX_UNLOCK_THRESHOLD_HCITX_Q_IN_PERCENT    (50)
 
 /*****************************************************************************
  *                           Type Definitions
  *****************************************************************************/
+
 /**
- * BT HCI incoming data ready event
+ * BT event (with message header and payload)
  */
-#define BT_EVT_TO_HCI_DATA_READY_UNKNOWN   (BT_EVT_HCI_DATA_READY_BASE + 0)
-#define BT_EVT_TO_HCI_DATA_READY_ACL       (BT_EVT_HCI_DATA_READY_BASE + 1)
-#define BT_EVT_TO_HCI_DATA_READY_SCO       (BT_EVT_HCI_DATA_READY_BASE + 2)
-#define BT_EVT_TO_HCI_DATA_READY_EVT       (BT_EVT_HCI_DATA_READY_BASE + 3)
+#define BT_EVT_TO_BTD_EVENT                 (0x0201)
+#define BT_EVT_TO_BTD_ACL                   (0x0202)
+#define BT_EVT_TO_BTD_SCO                   (0x0203)
+
+#define BT_EVT_TO_HCI_COMMAND               (0x0401)
+#define BT_EVT_TO_HCI_ACL                   (0x0402)
+#define BT_EVT_TO_HCI_SCO                   (0x0403)
+#define BT_EVT_INVALID                      (0xFFFF)
 typedef uint16_t bt_task_event_t;
+
+/**
+ * BT indication (without header/payload)
+ */
+#define BT_IND_BASE                         (0xDADBF000)
+
+#define OFFSET_TASK_SHUTDOWN                (0)
+#define OFFSET_DATA_READY_UNKNOWN           (1)
+#define OFFSET_DATA_READY_ACL               (2)
+#define OFFSET_DATA_READY_SCO               (3)
+#define OFFSET_DATA_READY_EVT               (4)
+#define OFFSET_TIMER                        (5)
+#define BT_IND_TOTAL_NUM                    (6)
+
+#define BT_IND_ID_MASK                      (0x00000FFF)
+
+#define BT_IND_TASK_SHUTDOWN                (BT_IND_BASE + OFFSET_TASK_SHUTDOWN)
+#define BT_IND_TO_HCI_DATA_READY_UNKNOWN    (BT_IND_BASE + OFFSET_DATA_READY_UNKNOWN)
+#define BT_IND_TO_HCI_DATA_READY_ACL        (BT_IND_BASE + OFFSET_DATA_READY_ACL)
+#define BT_IND_TO_HCI_DATA_READY_SCO        (BT_IND_BASE + OFFSET_DATA_READY_SCO)
+#define BT_IND_TO_HCI_DATA_READY_EVT        (BT_IND_BASE + OFFSET_DATA_READY_EVT)
+#define BT_IND_TO_BTS_TIMER                 (BT_IND_BASE + OFFSET_TIMER)
+#define BT_IND_END                          (BT_IND_BASE + BT_IND_TOTAL_NUM)
+
+#define BT_IND_INVALID                      (0xFFFFFFFF)
+typedef uint32_t bt_task_ind_t;
 
 /**
  * Message structure is used to communicate between tasks
@@ -94,18 +112,29 @@ typedef struct
  */
 #define BT_MSG_HDR_SIZE             (sizeof(BT_MSG_HDR))
 
+#define HCI_EVT_MSG_HDR_SIZE        (BT_MSG_HDR_SIZE + HCIE_PREAMBLE_SIZE)
+#define HCI_ACL_MSG_HDR_SIZE        (BT_MSG_HDR_SIZE + HCI_DATA_PREAMBLE_SIZE)
+#define HCI_SCO_MSG_HDR_SIZE        (BT_MSG_HDR_SIZE + HCI_SCO_PREAMBLE_SIZE)
+
+
 extern cy_queue_t  cybt_task_queue[];
 
 /**
  * Task queue related declaration
  */
-#define BTU_TASK_QUEUE              (cybt_task_queue[BT_TASK_ID_BTU])
-#define HCI_TASK_QUEUE              (cybt_task_queue[BT_TASK_ID_HCI])
+#define HCI_RX_TASK_QUEUE            (cybt_task_queue[BT_TASK_ID_HCI_RX])
+#define HCI_TX_TASK_QUEUE            (cybt_task_queue[BT_TASK_ID_HCI_TX])
 
-#define BTU_TASK_QUEUE_COUNT        (32)
-#define HCI_TASK_QUEUE_COUNT        (32)
-#define BTU_TASK_QUEUE_ITEM_SIZE    (sizeof(BT_MSG_HDR *))
-#define HCI_TASK_QUEUE_ITEM_SIZE    (sizeof(BT_MSG_HDR *))
+#define HCI_RX_TASK_QUEUE_COUNT      (32)
+#define HCI_TX_TASK_QUEUE_COUNT      (32)
+#define HCI_RX_TASK_QUEUE_ITEM_SIZE  (sizeof(bt_task_ind_t))
+#define HCI_TX_TASK_QUEUE_ITEM_SIZE  (sizeof(BT_MSG_HDR *))
+
+#define CYBT_HCI_TX_NORMAL                    (0)
+#define CYBT_HCI_TX_BLOCKED_HEAP_RAN_OUT      (1 << 0)
+#define CYBT_HCI_TX_BLOCKED_QUEUE_FULL_CMD    (1 << 1)
+#define CYBT_HCI_TX_BLOCKED_QUEUE_FULL_ACL    (1 << 2)
+typedef uint8_t cybt_hci_tx_status_t;
 
 #ifdef __cplusplus
 extern "C"
@@ -157,11 +186,29 @@ cybt_result_t cybt_platform_task_mempool_init(uint32_t total_size);
  * @returns  the pointer of memory block
  *
  */
-void *cybt_platform_task_mempool_alloc(uint32_t req_size);
+void *cybt_platform_task_tx_mempool_alloc(uint32_t req_size);
 
 
 /**
- * Free and return the memory block to task memory pool.
+ * Get the start address of pre-allocated memory block for HC transmitting packet.
+ *
+ * @returns  the pointer of memory block
+ *
+ */
+void *cybt_platform_task_get_tx_cmd_mem(void);
+
+
+/**
+ * Get the start address of pre-allocated memory block for HCI receiving packet.
+ *
+ * @returns  the pointer of memory block
+ *
+ */
+void *cybt_platform_task_get_rx_mem(void);
+
+
+/**
+ * Free and return the memory block to task tx/rx memory pool.
  *
  * @param[in]   p_mem_block: the pointer of memory block
  *
@@ -180,7 +227,7 @@ void cybt_platform_task_mempool_deinit(void);
 
 
 /**
- * Send message to BT task.
+ * Send message to HCI RX task.
  *
  * @param[in] p_bt_msg    : the pointer of the message
  * @param[in] is_from_isr : true if this function is called from isr context
@@ -191,13 +238,13 @@ void cybt_platform_task_mempool_deinit(void);
  *           CYBT_ERR_QUEUE_ALMOST_FULL
  *           CYBT_ERR_SEND_QUEUE_FAILED
  */
-cybt_result_t cybt_send_msg_to_bt_task(BT_MSG_HDR *p_bt_msg,
-                                                   bool is_from_isr
-                                                  );
+cybt_result_t cybt_send_msg_to_hci_rx_task(bt_task_ind_t bt_ind_msg,
+                                                         bool is_from_isr
+                                                        );
 
 
 /**
- * Send message to HCI task.
+ * Send message to HCI TX task.
  *
  * @param[in] p_bt_msg    : the pointer of the message
  * @param[in] is_from_isr : true if this function is called from isr context
@@ -207,9 +254,9 @@ cybt_result_t cybt_send_msg_to_bt_task(BT_MSG_HDR *p_bt_msg,
  *           CYBT_ERR_BADARG
  *           CYBT_ERR_SEND_QUEUE_FAILED
  */
-cybt_result_t cybt_send_msg_to_hci_task(BT_MSG_HDR *p_bt_msg,
-                                                     bool is_from_isr
-                                                    );
+cybt_result_t cybt_send_msg_to_hci_tx_task(BT_MSG_HDR *p_bt_msg,
+                                                         bool is_from_isr
+                                                        );
 
 
 /**
@@ -219,7 +266,38 @@ cybt_result_t cybt_send_msg_to_hci_task(BT_MSG_HDR *p_bt_msg,
  *
  * @returns    the utilization in percentage
  */
-uint8_t cybt_platform_task_queue_utilization(uint8_t task_id);
+uint8_t cybt_platform_task_get_queue_utilization(uint8_t task_id);
+
+
+/**
+ * Get the usage rate of TX heap.
+ *
+ * @param[out]  p_largest_free_size: the size of largest free block in TX heap currently
+ *
+ * @returns    the utilization in percentage
+ */
+uint8_t cybt_platform_task_get_tx_heap_utilization(uint16_t *p_largest_free_size);
+
+
+/**
+ * Get hci tx task status
+ *
+ * @returns  CYBT_HCI_TX_NORMAL
+ *           CYBT_HCI_TX_BLOCKED_TX_HEAP_RAN_OUT
+ *           CYBT_HCI_TX_BLOCKED_HCI_TX_QUEUE_FULL
+ 
+ */
+cybt_hci_tx_status_t cybt_get_hci_tx_status(void);
+
+
+/**
+ * Lock hci tx task to stop transmission.
+ *
+ * @param[out]  reason: the reason to lock hci tx
+ *
+ * @returns    none
+ */
+void cybt_lock_hci_tx(cybt_hci_tx_status_t reason);
 
 
 #ifdef __cplusplus

@@ -69,7 +69,15 @@ uint8_t *host_stack_get_acl_to_lower_buffer(wiced_bt_transport_t transport, uint
     uint16_t    msg_packet_len;
     uint16_t    payload_len;
     uint8_t     *p;
+    BT_MSG_HDR  *p_bt_msg;
+
     const cybt_platform_config_t *p_bt_platform_cfg = cybt_platform_get_config();
+
+    if(CYBT_HCI_TX_NORMAL != cybt_get_hci_tx_status())
+    {
+        SPIF_TRACE_ERROR("get_acl_to_lower_buffer(): TX is blocked now");
+        return NULL;
+    }
 
     if(CYBT_HCI_UART == p_bt_platform_cfg->hci_config.hci_transport)
     {
@@ -85,14 +93,24 @@ uint8_t *host_stack_get_acl_to_lower_buffer(wiced_bt_transport_t transport, uint
         return NULL;
     }
 
-    BT_MSG_HDR *p_bt_msg = (BT_MSG_HDR *) cybt_platform_task_mempool_alloc(msg_packet_len);
+    p_bt_msg = (BT_MSG_HDR *) cybt_platform_task_tx_mempool_alloc(msg_packet_len);
 
     if(NULL == p_bt_msg)
     {
-        SPIF_TRACE_ERROR("get_acl_to_lower_buffer(): Unable to alloc memory");
+        uint16_t largest_free_size = 0;
+        uint8_t  use_perc = 0;
+        use_perc = cybt_platform_task_get_tx_heap_utilization(&largest_free_size);
+        SPIF_TRACE_ERROR("get_acl_to_lower_buffer(): Unable to alloc memory (size = %d, heap = %d%%)", size, use_perc);
+
+        cybt_lock_hci_tx(CYBT_HCI_TX_BLOCKED_HEAP_RAN_OUT);
         return NULL;
     }
 
+    SPIF_TRACE_DEBUG("get_acl_to_lower_buffer(): p_bt_msg = 0x%p, size = %d",
+                     p_bt_msg,
+                     size
+                    );
+    
     p = (uint8_t *)(p_bt_msg + 1);
 
     p_bt_msg->event = BT_EVT_TO_HCI_ACL;
@@ -128,6 +146,14 @@ wiced_result_t host_stack_send_acl_to_lower(wiced_bt_transport_t transport,
         return WICED_ERROR;
     }
 
+    if(CYBT_HCI_TX_NORMAL != cybt_get_hci_tx_status())
+    {
+        SPIF_TRACE_ERROR("send_acl_to_lower(): TX is blocked now");
+
+        cybt_platform_task_mempool_free(p_msg_hdr);
+        return WICED_ERROR;
+    }
+
     SPIF_TRACE_DEBUG("send_acl_to_lower(): trans = %d, p_data = 0x%p, len = %d",
                      transport,
                      p_data,
@@ -143,7 +169,7 @@ wiced_result_t host_stack_send_acl_to_lower(wiced_bt_transport_t transport,
         return WICED_ERROR;
     }
 
-    result = cybt_send_msg_to_hci_task(p_msg_hdr, false);
+    result = cybt_send_msg_to_hci_tx_task(p_msg_hdr, false);
     if(CYBT_SUCCESS == result)
     {
         return WICED_SUCCESS;
@@ -153,6 +179,9 @@ wiced_result_t host_stack_send_acl_to_lower(wiced_bt_transport_t transport,
         SPIF_TRACE_ERROR("send_acl_to_lower(): Send hci queue failed (ret = 0x%x)",
                          result
                         );
+
+        cybt_lock_hci_tx(CYBT_HCI_TX_BLOCKED_QUEUE_FULL_ACL);
+        cybt_platform_task_mempool_free(p_msg_hdr);
         return WICED_ERROR;
     }
 }
@@ -162,14 +191,12 @@ wiced_result_t host_stack_send_cmd_to_lower(uint8_t *p_cmd, uint16_t cmd_len)
     cybt_result_t result;
     BT_MSG_HDR  *p_msg_hdr;
     uint8_t     *p;
-    uint16_t    msg_packet_len;
     uint16_t    payload_len;
     const cybt_platform_config_t *p_bt_platform_cfg = cybt_platform_get_config();
 
     if(CYBT_HCI_UART == p_bt_platform_cfg->hci_config.hci_transport)
     {
         // One extra byte is added for HCI UART packet type
-        msg_packet_len = BT_MSG_HDR_SIZE + HCI_UART_TYPE_HEADER_SIZE + cmd_len;
         payload_len = cmd_len + HCI_UART_TYPE_HEADER_SIZE;
     }
     else
@@ -180,10 +207,10 @@ wiced_result_t host_stack_send_cmd_to_lower(uint8_t *p_cmd, uint16_t cmd_len)
         return WICED_ERROR;
     }
 
-    p_msg_hdr = (BT_MSG_HDR  *) cybt_platform_task_mempool_alloc(msg_packet_len);
+    p_msg_hdr = (BT_MSG_HDR  *) cybt_platform_task_get_tx_cmd_mem();
     if(NULL == p_msg_hdr)
     {
-        SPIF_TRACE_ERROR("send_cmd_to_lower(): Unable to alloc memory");
+        SPIF_TRACE_ERROR("send_cmd_to_lower(): Unable to get memory");
         return WICED_ERROR;
     }
 
@@ -204,35 +231,92 @@ wiced_result_t host_stack_send_cmd_to_lower(uint8_t *p_cmd, uint16_t cmd_len)
 
     memcpy(p, p_cmd, cmd_len);
 
-    result = cybt_send_msg_to_hci_task(p_msg_hdr, false);
+    result = cybt_send_msg_to_hci_tx_task(p_msg_hdr, false);
     if(CYBT_SUCCESS == result)
     {
         return WICED_SUCCESS;
     }
     else
     {
-        SPIF_TRACE_ERROR("send_cmd_to_lower(): Send hci queue failed (ret = 0x%x)",
+        SPIF_TRACE_ERROR("send_cmd_to_lower(): Send hci_tx queue failed (ret = 0x%x)",
                          result
                         );
+        cybt_lock_hci_tx(CYBT_HCI_TX_BLOCKED_QUEUE_FULL_CMD);
+
         return WICED_ERROR;
     }
 }
 
-wiced_result_t host_stack_send_sco_to_lower(uint16_t handle, uint8_t* p_data, uint8_t len)
+uint8_t *host_stack_get_sco_to_lower_buffer(uint32_t size)
 {
-    cybt_result_t result;
-    BT_MSG_HDR  *p_msg_hdr;
-    uint8_t     *p;
     uint16_t    msg_packet_len;
     uint16_t    payload_len;
-    hci_sco_packet_header_t *p_sco_hdr;
+    uint8_t     *p;
+    BT_MSG_HDR  *p_bt_msg;
+
     const cybt_platform_config_t *p_bt_platform_cfg = cybt_platform_get_config();
+
+    if(CYBT_HCI_TX_NORMAL != cybt_get_hci_tx_status())
+    {
+        SPIF_TRACE_ERROR("get_sco_to_lower_buffer(): TX is blocked now");
+        return NULL;
+    }
 
     if(CYBT_HCI_UART == p_bt_platform_cfg->hci_config.hci_transport)
     {
         // One extra byte is added for HCI UART packet type
-        msg_packet_len = BT_MSG_HDR_SIZE + HCI_UART_TYPE_HEADER_SIZE + sizeof(hci_sco_packet_header_t) + len;;
-        payload_len = HCI_UART_TYPE_HEADER_SIZE + sizeof(hci_sco_packet_header_t) + len;
+        msg_packet_len = BT_MSG_HDR_SIZE + HCI_UART_TYPE_HEADER_SIZE + size;
+        payload_len = size + HCI_UART_TYPE_HEADER_SIZE;
+    }
+    else
+    {
+        SPIF_TRACE_ERROR("get_sco_to_lower_buffer(): Unknown transport (%d)",
+                         p_bt_platform_cfg->hci_config.hci_transport
+                        );
+        return NULL;
+    }
+
+    p_bt_msg = (BT_MSG_HDR *) cybt_platform_task_tx_mempool_alloc(msg_packet_len);
+
+    if(NULL == p_bt_msg)
+    {
+        uint16_t largest_free_size = 0;
+        uint8_t  use_perc = 0;
+        use_perc = cybt_platform_task_get_tx_heap_utilization(&largest_free_size);
+        SPIF_TRACE_ERROR("get_acl_to_lower_buffer(): Unable to alloc memory (size = %d, heap = %d%%)", size, use_perc);
+
+        cybt_lock_hci_tx(CYBT_HCI_TX_BLOCKED_HEAP_RAN_OUT);
+        return NULL;
+    }
+
+    SPIF_TRACE_DEBUG("get_sco_to_lower_buffer(): p_bt_msg = 0x%p, size = %d",
+                     p_bt_msg,
+                     size
+                    );
+
+    p = (uint8_t *)(p_bt_msg + 1);
+
+    p_bt_msg->event = BT_EVT_TO_HCI_SCO;
+    p_bt_msg->length = payload_len;
+
+    if(CYBT_HCI_UART == p_bt_platform_cfg->hci_config.hci_transport)
+    {
+        *p++ = HCI_PACKET_TYPE_SCO;
+    }
+
+    return p;
+}
+
+wiced_result_t host_stack_send_sco_to_lower(uint8_t* p_sco_data, uint8_t len)
+{
+    cybt_result_t result;
+    BT_MSG_HDR  *p_msg_hdr;
+    const cybt_platform_config_t *p_bt_platform_cfg = cybt_platform_get_config();
+
+    if(CYBT_HCI_UART == p_bt_platform_cfg->hci_config.hci_transport)
+    {
+        // One extra byte is for HCI UART packet type
+        p_msg_hdr = (BT_MSG_HDR *)(p_sco_data - BT_MSG_HDR_SIZE - HCI_UART_TYPE_HEADER_SIZE);
     }
     else
     {
@@ -242,33 +326,29 @@ wiced_result_t host_stack_send_sco_to_lower(uint16_t handle, uint8_t* p_data, ui
         return WICED_ERROR;
     }
 
-    p_msg_hdr = (BT_MSG_HDR  *) cybt_platform_task_mempool_alloc(msg_packet_len);
-    if(NULL == p_msg_hdr)
+    if(CYBT_HCI_TX_NORMAL != cybt_get_hci_tx_status())
     {
-        SPIF_TRACE_ERROR("send_sco_to_lower(): Unable to alloc memory");
+        SPIF_TRACE_ERROR("send_sco_to_lower(): TX is blocked now");
+
+        cybt_platform_task_mempool_free(p_msg_hdr);
         return WICED_ERROR;
     }
 
-    SPIF_TRACE_DEBUG("send_sco_to_lower(): handle = 0x%x, p_data = 0x%p, len = %d",
-                     handle,
-                     p_data,
+    SPIF_TRACE_DEBUG("send_sco_to_lower(): p_sco_data = 0x%p, len = %d",
+                     p_sco_data,
                      len
                     );
 
-    p_msg_hdr->event = BT_EVT_TO_HCI_SCO;
-    p_msg_hdr->length = payload_len;
+    if(NULL == p_sco_data || 0 == len)
+    {
+        SPIF_TRACE_ERROR("send_sco_to_lower(): Invalid data(0x%p) or length(%d)",
+                         p_sco_data,
+                         len
+                        );
+        return WICED_ERROR;
+    }
 
-    p = (uint8_t *)(p_msg_hdr + 1);
-    *p++ = HCI_PACKET_TYPE_SCO;
-
-    p_sco_hdr = (hci_sco_packet_header_t *) p;
-    p_sco_hdr->hci_handle = handle;
-    p_sco_hdr->content_length = len;
-
-    p += sizeof(hci_sco_packet_header_t);
-    memcpy(p, p_data, len);
-
-    result = cybt_send_msg_to_hci_task(p_msg_hdr, false);
+    result = cybt_send_msg_to_hci_tx_task(p_msg_hdr, false);
     if(CYBT_SUCCESS == result)
     {
         return WICED_SUCCESS;
@@ -327,6 +407,7 @@ void host_stack_platform_interface_init(void)
     host_stack_platform_if.pf_get_acl_to_lower_buffer = host_stack_get_acl_to_lower_buffer;
     host_stack_platform_if.pf_write_acl_to_lower      = host_stack_send_acl_to_lower;
     host_stack_platform_if.pf_write_cmd_to_lower      = host_stack_send_cmd_to_lower;
+    host_stack_platform_if.pf_get_sco_to_lower_buffer = host_stack_get_sco_to_lower_buffer;
     host_stack_platform_if.pf_write_sco_to_lower      = host_stack_send_sco_to_lower;
     host_stack_platform_if.pf_hci_trace_cback_t       = NULL;
     host_stack_platform_if.pf_debug_trace             = host_stack_print_trace_log;

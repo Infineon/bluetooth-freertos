@@ -174,7 +174,7 @@ typedef struct
     cybt_hci_transport_config_t    hci_config;         /**< Bluetooth HCI transport configuration */
     cybt_controller_config_t       controller_config;  /**< Cypress Bluetooth chip configuration*/
     uint32_t                       task_mem_pool_size; /**< memory pool size for Bluetotoh task communication.
-                                                        * The default size is 2048 bytes if it wasn't specified.
+                                                        * The default size is 2344 bytes if it wasn't specified.
                                                         */
 
 } cybt_platform_config_t;

@@ -128,19 +128,9 @@ uint8_t calculate_lptimer_freq_shift(uint32_t clock_freq)
 
 void platform_stack_lptimer_cback(void *callback_arg, cyhal_lptimer_event_t event)
 {
-    BT_MSG_HDR *p_bt_msg = (BT_MSG_HDR *) cybt_platform_task_mempool_alloc(BT_MSG_HDR_SIZE);
-
-    if(NULL == p_bt_msg)
-    {
-        CY_ASSERT(0);
-        return;
-    }
-
     cybt_platform_sleep_lock();
 
-    p_bt_msg->event = BT_EVT_TO_BTU_TIMER;
-    p_bt_msg->length = 0;
-    cybt_send_msg_to_bt_task(p_bt_msg, true);
+    cybt_send_msg_to_hci_rx_task(BT_IND_TO_BTS_TIMER, true);
 
     cybt_platform_sleep_unlock();
 }
@@ -311,17 +301,7 @@ void cybt_platform_set_next_timeout(uint64_t abs_tick_us_to_expire)
     if(abs_tick_us_to_expire <= curr_time_in_us)
     {
         // Already expired...
-        BT_MSG_HDR *p_bt_msg = (BT_MSG_HDR *) cybt_platform_task_mempool_alloc(BT_MSG_HDR_SIZE);
-        if(p_bt_msg)
-        {
-            p_bt_msg->event = BT_EVT_TO_BTU_TIMER;
-            p_bt_msg->length = 0;
-            cybt_send_msg_to_bt_task(p_bt_msg, false);
-        }
-        else
-        {
-            SPIF_TRACE_ERROR("set_next_timeout(): Fail to allocate memory");
-        }
+        cybt_send_msg_to_hci_rx_task(BT_IND_TO_BTS_TIMER, true);
 
         return;
     }
@@ -344,33 +324,21 @@ void cybt_platform_log_print(const char *fmt_str, ...)
     vsnprintf(buffer, CYBT_TRACE_BUFFER_SIZE, fmt_str, ap);
     va_end(ap);
 
-    printf("[%lu] %s\r\n", (uint32_t)time, buffer);
+    printf("[%u] %s\r\n", (unsigned int)time, buffer);
 }
 
 static void cybt_uart_rx_not_empty(void)
 {
-    uint32_t data_ready_evt = BT_EVT_TO_HCI_DATA_READY_UNKNOWN;
-    cybt_result_t result;
-
     cyhal_uart_enable_event(&hci_uart_cb.hal_obj,
                             CYHAL_UART_IRQ_RX_NOT_EMPTY,
                             CYHAL_ISR_PRIORITY_DEFAULT,
                             false
                            );
 
-    result = cybt_send_msg_to_hci_task((BT_MSG_HDR *)data_ready_evt, true);
-    if(CYBT_SUCCESS != result)
-    {
-        // Somehow hci task is unable to receive message, 
-        // enable rx interrupt to wait for next one
-        cyhal_uart_enable_event(&hci_uart_cb.hal_obj,
-                                CYHAL_UART_IRQ_RX_NOT_EMPTY,
-                                CYHAL_ISR_PRIORITY_DEFAULT,
-                                true
-                               );
-    }
+    cybt_send_msg_to_hci_rx_task(BT_IND_TO_HCI_DATA_READY_UNKNOWN, true);
 }
 
+uint32_t uart_tx_done_cnt = 0;
 static void cybt_uart_tx_done_irq(void)
 {
     cy_rtos_set_semaphore(&hci_uart_cb.tx_complete, true);
@@ -502,7 +470,7 @@ cybt_result_t cybt_platform_hci_open(void)
     {
         return  CYBT_SUCCESS;
     }
-    
+
     memset(&hci_uart_cb, 0, sizeof(hci_uart_cb_t));
 
     cy_rtos_init_semaphore(&hci_uart_cb.tx_complete,
@@ -517,7 +485,8 @@ cybt_result_t cybt_platform_hci_open(void)
     cy_rtos_init_mutex(&hci_uart_cb.rx_atomic);
 
 #if( configUSE_TICKLESS_IDLE != 0 )
-    if(NC != p_bt_platform_cfg->controller_config.sleep_mode.host_wakeup_pin)
+    if((CYBT_SLEEP_MODE_ENABLED == p_bt_platform_cfg->controller_config.sleep_mode.sleep_mode_enabled)
+      && (NC != p_bt_platform_cfg->controller_config.sleep_mode.host_wakeup_pin))
     {
     #if defined(CYCFG_BT_LP_ENABLED)
         cyhal_gpio_free(p_bt_platform_cfg->controller_config.sleep_mode.host_wakeup_pin);
@@ -563,7 +532,8 @@ cybt_result_t cybt_platform_hci_open(void)
     }
 #endif
 
-    if(NC != p_bt_platform_cfg->controller_config.sleep_mode.device_wakeup_pin)
+    if((CYBT_SLEEP_MODE_ENABLED == p_bt_platform_cfg->controller_config.sleep_mode.sleep_mode_enabled)
+        && (NC != p_bt_platform_cfg->controller_config.sleep_mode.device_wakeup_pin))
     {
     #if defined(CYCFG_BT_LP_ENABLED)
         cyhal_gpio_free(p_bt_platform_cfg->controller_config.sleep_mode.device_wakeup_pin);
@@ -687,7 +657,7 @@ cybt_result_t cybt_platform_hci_set_baudrate(uint32_t baudrate)
 
     if(CY_RSLT_SUCCESS == result)
     {
-        HCIDRV_TRACE_ERROR("set_baudrate(): SUCCESS, req = %d, actual = %d",
+        HCIDRV_TRACE_DEBUG("set_baudrate(): SUCCESS, req = %d, actual = %d",
                            baudrate,
                            actual_baud
                           );

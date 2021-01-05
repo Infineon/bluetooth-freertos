@@ -106,10 +106,68 @@ $(document).ready(function(){initNavTree('index.html','');});
 <li>Enable libbtstack.a trace or use <code>WICED_BT_TRACE</code> macro, please set <code>CYBT_TRACE_ID_STACK</code> category which be invoked prior to <b>host_stack_platform_interface_init( )</b>, and can not used after <b>host_stack_platform_interface_deinit( )</b></li>
 <li>Undefined <code>CYBT_PLATFORM_TRACE_ENABLE</code> to disables all the debug log messages <div class="fragment"><div class="line">//#define CYBT_PLATFORM_TRACE_ENABLE</div></div><!-- fragment --></li>
 </ul>
+<h2>Working flow</h2>
+<h3>~ release-v1.3.0</h3>
+<ul>
+<li>Porting layer create 2 tasks<ul>
+<li><b>HCI task</b> which handles HCI packet transmission and reception</li>
+<li><b>BTU/BT task</b> which handles Bluetooth core stack and profiles</li>
+</ul>
+</li>
+<li>TX path:<ul>
+<li>BT stack calls pf_write_xxx_to_lower( ) with packet data</li>
+<li>Inside those functions,<ul>
+<li>Allocate memory from porting layer heap for the TX packet</li>
+<li>Put TX packet into HCI task queue</li>
+</ul>
+</li>
+<li>HCI task gets TX packet from the queue then write the same to HCI UART</li>
+</ul>
+</li>
+<li>RX path:<ul>
+<li>UART driver fires the interrupt when data was coming from BT controller</li>
+<li>In IRQ handler, put the related message to HCI task queue</li>
+<li>Once HCI task gets the message,<ul>
+<li>Allocate memory from porting layer heap, read the packet from UART and write the same to the allocated memory</li>
+<li>Put RX packet into BT task queue.</li>
+</ul>
+</li>
+<li>BT task gets RX packet then calls wiced_bt_process_xxx() to notify BT stack</li>
+</ul>
+</li>
+</ul>
+<h3>since release-v2.0.0</h3>
+<ul>
+<li>Porting layer create 2 tasks<ul>
+<li><b>HCI_TX task</b> which handles HCI packet from BT stack to BT controller</li>
+<li><b>HCI_RX task</b> which handles HCI packet from BT controller to BT stack</li>
+</ul>
+</li>
+<li>TX path:<ul>
+<li>BT stack calls pf_write_xxx_to_lower( ) with packet data</li>
+<li>Inside those functions,<ul>
+<li>Allocate memory from porting layer heap for the TX packet</li>
+<li>Put TX packet into HCI_TX task queue</li>
+</ul>
+</li>
+<li>HCI_TX task gets TX packet from the queue then write the same to HCI UART</li>
+</ul>
+</li>
+<li>RX path:<ul>
+<li>UART driver fires the interrupt when data was coming from BT controller</li>
+<li>In IRQ handler, put the related message to HCI_RX task queue</li>
+<li>Once HCI_RX task gets the message,<ul>
+<li>Read the packet from UART and write the same to the static buffer</li>
+<li>Call wiced_bt_process_xxx() to notify BT stack</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
 <h2>API Reference Manual</h2>
 <ul>
 <li><a href="https://cypresssemiconductorco.github.io/bluetooth-freertos/api_reference_manual/html/index.html">Bluetooth platform API manual</a></li>
-<li><a href="https://cypresssemiconductorco.github.io/btstack/api_reference_manual/html/index.html">Bluetooth stack API manual</a></li>
+<li><a href="https://cypresssemiconductorco.github.io/btstack/ble/api_reference_manual/html/index.html">Bluetooth stack BLE API manual</a></li>
 </ul>
 <p>© Cypress Semiconductor Corporation, 2020. </p>
 </div></div><!-- PageDoc -->

@@ -34,13 +34,38 @@
 #include "wiced_memory.h"
 
 
+/*****************************************************************************
+ *                                Constants
+ *****************************************************************************/
+#define CYBT_RX_MEM_MIN_SIZE         (1040)
+#define CYBT_TX_CMD_MEM_MIN_SIZE     (264)
+#define CYBT_TX_HEAP_MIN_SIZE        (1040)
+
+#define CYBT_TASK_MINIMUM_POOL_SIZE  (CYBT_RX_MEM_MIN_SIZE \
+                                      + CYBT_TX_CMD_MEM_MIN_SIZE \
+                                      + CYBT_TX_HEAP_MIN_SIZE \
+                                     )
+
+/*****************************************************************************
+ *                           Type Definitions
+ *****************************************************************************/
+typedef struct
+{
+    uint8_t         *p_rx_mem;
+    uint32_t        rx_mem_size;
+    uint8_t         *p_tx_cmd_mem;
+    uint32_t        tx_cmd_mem_size;
+    wiced_bt_heap_t *p_tx_data_heap;
+    uint32_t        tx_data_heap_size;
+} cybt_task_mem_cb_t;
+
 /******************************************************************************
  *                           Variables Definitions
  ******************************************************************************/
 cy_thread_t cybt_task[BT_TASK_NUM] = {0};
 cy_queue_t  cybt_task_queue[BT_TASK_NUM] = {0};
 
-wiced_bt_heap_t *gp_task_heap = NULL;
+cybt_task_mem_cb_t  task_mem_cb = {0};
 
 
 /******************************************************************************
@@ -48,20 +73,18 @@ wiced_bt_heap_t *gp_task_heap = NULL;
  ******************************************************************************/
 cybt_result_t cybt_platform_task_init(void)
 {
-    extern void cybt_bt_task(cy_thread_arg_t arg);
-    extern void cybt_hci_task(cy_thread_arg_t arg);
+    extern void cybt_hci_tx_task(cy_thread_arg_t arg);
+    extern void cybt_hci_rx_task(cy_thread_arg_t arg);
 
     cy_rslt_t cy_result;
     cybt_result_t task_result;
     const cybt_platform_config_t *p_bt_platform_cfg = cybt_platform_get_config();
 
-    uint32_t task_pool_size = p_bt_platform_cfg->task_mem_pool_size;
-    if(0 == task_pool_size)
-    {
-        task_pool_size = CYBT_TASK_DEFAULT_POOL_SIZE;
-    }
+    uint32_t total_mem_pool_size = 
+        (p_bt_platform_cfg->task_mem_pool_size > CYBT_TASK_MINIMUM_POOL_SIZE)?
+        p_bt_platform_cfg->task_mem_pool_size: CYBT_TASK_MINIMUM_POOL_SIZE;
 
-    task_result = cybt_platform_task_mempool_init(task_pool_size);
+    task_result = cybt_platform_task_mempool_init(total_mem_pool_size);
     if(CYBT_SUCCESS != task_result)
     {
         MAIN_TRACE_ERROR("task_init(): Create mempool failed (0x%x)",
@@ -70,57 +93,57 @@ cybt_result_t cybt_platform_task_init(void)
         return CYBT_ERR_INIT_MEMPOOL_FAILED;
     }
 
-    cy_result = cy_rtos_init_queue(&BTU_TASK_QUEUE,
-                                   BTU_TASK_QUEUE_COUNT,
-                                   BTU_TASK_QUEUE_ITEM_SIZE
+    cy_result = cy_rtos_init_queue(&HCI_TX_TASK_QUEUE,
+                                   HCI_TX_TASK_QUEUE_COUNT,
+                                   HCI_TX_TASK_QUEUE_ITEM_SIZE
                                   );
     if(CY_RSLT_SUCCESS != cy_result)
     {
-        MAIN_TRACE_ERROR("task_init(): Init bt task queue failed (0x%x)",
+        MAIN_TRACE_ERROR("task_init(): Init hci_tx task queue failed (0x%x)",
                          cy_result
                         );
         return CYBT_ERR_INIT_QUEUE_FAILED;
     }
 
-    cy_result = cy_rtos_init_queue(&HCI_TASK_QUEUE,
-                                   HCI_TASK_QUEUE_COUNT,
-                                   HCI_TASK_QUEUE_ITEM_SIZE
+    cy_result = cy_rtos_init_queue(&HCI_RX_TASK_QUEUE,
+                                   HCI_RX_TASK_QUEUE_COUNT,
+                                   HCI_RX_TASK_QUEUE_ITEM_SIZE
                                   );
     if(CY_RSLT_SUCCESS != cy_result)
     {
-        MAIN_TRACE_ERROR("task_init(): Init hci task queue failed (0x%x)",
+        MAIN_TRACE_ERROR("task_init(): Init hci_rx task queue failed (0x%x)",
                          cy_result
                         );
         return CYBT_ERR_INIT_QUEUE_FAILED;
     }
 
-    cy_result = cy_rtos_create_thread(&cybt_task[BT_TASK_ID_BTU],
-                                      cybt_bt_task,
-                                      BT_TASK_NAME_BTU,
+    cy_result = cy_rtos_create_thread(&cybt_task[BT_TASK_ID_HCI_TX],
+                                      cybt_hci_tx_task,
+                                      BT_TASK_NAME_HCI_TX,
                                       NULL,
-                                      BTU_TASK_STACK_SIZE,
-                                      BTU_TASK_PRIORITY,
+                                      HCI_TX_TASK_STACK_SIZE,
+                                      HCI_TX_TASK_PRIORITY,
                                       (cy_thread_arg_t) NULL
                                      );
     if(CY_RSLT_SUCCESS != cy_result)
     {
-        MAIN_TRACE_ERROR("task_init(): Create bt task failed (0x%x)",
+        MAIN_TRACE_ERROR("task_init(): Create hci_tx task failed (0x%x)",
                          cy_result
                         );
         return CYBT_ERR_CREATE_TASK_FAILED;
     }
 
-    cy_result = cy_rtos_create_thread(&cybt_task[BT_TASK_ID_HCI],
-                                      cybt_hci_task,
-                                      BT_TASK_NAME_HCI,
+    cy_result = cy_rtos_create_thread(&cybt_task[BT_TASK_ID_HCI_RX],
+                                      cybt_hci_rx_task,
+                                      BT_TASK_NAME_HCI_RX,
                                       NULL,
-                                      HCI_TASK_STACK_SIZE,
-                                      HCI_TASK_PRIORITY,
+                                      HCI_RX_TASK_STACK_SIZE,
+                                      HCI_RX_TASK_PRIORITY,
                                       (cy_thread_arg_t) NULL
                                      );
     if(CY_RSLT_SUCCESS != cy_result)
     {
-        MAIN_TRACE_ERROR("task_init(): Create hci task failed (0x%x)",
+        MAIN_TRACE_ERROR("task_init(): Create hci_rx task failed (0x%x)",
                          cy_result
                         );
         return CYBT_ERR_CREATE_TASK_FAILED;
@@ -131,29 +154,20 @@ cybt_result_t cybt_platform_task_init(void)
 
 cybt_result_t cybt_platform_task_deinit(void)
 {
-    uint8_t idx;
-    cy_rslt_t result;
+    cybt_result_t result;
 
     MAIN_TRACE_DEBUG("cybt_platform_task_deinit()");
 
-    for(idx = 0; idx < BT_TASK_NUM; idx++)
+    result = cybt_send_msg_to_hci_rx_task(BT_IND_TASK_SHUTDOWN, false);
+    if(CYBT_SUCCESS != result)
     {
-        uint32_t task_shutdown_evt = BT_EVT_TASK_SHUTDOWN;
+        MAIN_TRACE_ERROR("task_deinit(): Failed to shutdown HCI_RX task");
+    }
 
-        result = cy_rtos_put_queue(&cybt_task_queue[idx],
-                                   (void *)&task_shutdown_evt,
-                                   0,
-                                   false
-                                  );
-        if(CY_RSLT_SUCCESS != result)
-        {
-            MAIN_TRACE_ERROR("task_deinit(): send queue failure (0x%x, task = %d)",
-                             result,
-                             idx
-                            );
-
-            return CYBT_ERR_SEND_QUEUE_FAILED;
-        }
+    result = cybt_send_msg_to_hci_tx_task((BT_MSG_HDR *)BT_IND_TASK_SHUTDOWN, false);
+    if(CYBT_SUCCESS != result)
+    {
+        MAIN_TRACE_ERROR("task_deinit(): Failed to shutdown HCI_TX task");
     }
 
     cybt_platform_task_mempool_deinit();
@@ -163,54 +177,72 @@ cybt_result_t cybt_platform_task_deinit(void)
 
 cybt_result_t cybt_platform_task_mempool_init(uint32_t total_size)
 {
-    void *p_heap_mem = NULL;
+    task_mem_cb.rx_mem_size = CYBT_RX_MEM_MIN_SIZE;
+    task_mem_cb.tx_cmd_mem_size = CYBT_TX_CMD_MEM_MIN_SIZE;
+    task_mem_cb.tx_data_heap_size = total_size - CYBT_RX_MEM_MIN_SIZE - CYBT_TX_CMD_MEM_MIN_SIZE;
 
-    MEM_TRACE_DEBUG("task_mempool_init(): size = %d", total_size);
+    task_mem_cb.p_tx_cmd_mem = (uint8_t *) cybt_platform_malloc(task_mem_cb.tx_cmd_mem_size);
+    task_mem_cb.p_rx_mem = (uint8_t *) cybt_platform_malloc(task_mem_cb.rx_mem_size);
+    task_mem_cb.p_tx_data_heap = (wiced_bt_heap_t *)cybt_platform_malloc(task_mem_cb.tx_data_heap_size);
 
-    p_heap_mem = (wiced_bt_heap_t *)cybt_platform_malloc(total_size);
-    gp_task_heap = wiced_bt_create_heap("CYBT_TASK_POOL",
-                                        p_heap_mem,
-                                        total_size,
-                                        NULL,
-                                        WICED_FALSE
-                                       );
-
-    if(NULL == gp_task_heap)
+    if((NULL == task_mem_cb.p_tx_cmd_mem)
+       || (NULL == task_mem_cb.p_rx_mem)
+       || (NULL == task_mem_cb.p_tx_data_heap)
+      )
     {
-        MEM_TRACE_ERROR("task_mempool_init(): Create heap failed");
+        MEM_TRACE_ERROR("task_mempool_init(): init failed, tx_cmd = 0x%x, tx_data = 0x%x, rx_mem = 0x%x",
+                        task_mem_cb.p_tx_cmd_mem,
+                        task_mem_cb.p_tx_data_heap,
+                        task_mem_cb.p_rx_mem
+                       );
+        cybt_platform_task_mempool_deinit();
+
         return CYBT_ERR_OUT_OF_MEMORY;
     }
+
+    task_mem_cb.p_tx_data_heap = wiced_bt_create_heap("CYBT_TASK_TX_POOL",
+                                                      task_mem_cb.p_tx_data_heap,
+                                                      task_mem_cb.tx_data_heap_size,
+                                                      NULL,
+                                                      WICED_FALSE
+                                                     );
 
     return CYBT_SUCCESS;
 }
 
-void *cybt_platform_task_mempool_alloc(uint32_t req_size)
+void *cybt_platform_task_tx_mempool_alloc(uint32_t req_size)
 {
     void *p_mem_block;
 
-    if(NULL == gp_task_heap)
+    if(NULL == task_mem_cb.p_tx_data_heap)
     {
-        MEM_TRACE_ERROR("task_memory_alloc(): Invalid Heap");
+        MEM_TRACE_ERROR("task_tx_memory_alloc(): Invalid Heap");
         return NULL;
     }
 
     cybt_platform_disable_irq();
 
-    p_mem_block = (void *) wiced_bt_get_buffer_from_heap(gp_task_heap, req_size);
+    p_mem_block = (void *) wiced_bt_get_buffer_from_heap(task_mem_cb.p_tx_data_heap,
+                                                         req_size
+                                                        );
 
     cybt_platform_enable_irq();
 
     return p_mem_block;
 }
 
+void *cybt_platform_task_get_tx_cmd_mem(void)
+{
+    return (void *) task_mem_cb.p_tx_cmd_mem;
+}
+
+void *cybt_platform_task_get_rx_mem(void)
+{
+    return (void *) task_mem_cb.p_rx_mem;
+}
+
 void cybt_platform_task_mempool_free(void *p_mem_block)
 {
-    if(NULL == gp_task_heap)
-    {
-        MEM_TRACE_ERROR("task_memory_free(): Invalid Heap");
-        return;
-    }
-
     cybt_platform_disable_irq();
 
     wiced_bt_free_buffer((wiced_bt_buffer_t *) p_mem_block);
@@ -222,12 +254,26 @@ void cybt_platform_task_mempool_deinit(void)
 {
     MEM_TRACE_DEBUG("task_mempool_deinit()");
 
-    wiced_bt_delete_heap(gp_task_heap);
-    cybt_platform_free(gp_task_heap);
-    gp_task_heap = NULL;
+    if(task_mem_cb.p_rx_mem)
+    {
+        cybt_platform_free(task_mem_cb.p_rx_mem);
+    }
+
+    if(task_mem_cb.p_tx_data_heap)
+    {
+        wiced_bt_delete_heap(task_mem_cb.p_tx_data_heap);
+        cybt_platform_free(task_mem_cb.p_tx_data_heap);
+    }
+
+    if(task_mem_cb.p_tx_cmd_mem)
+    {
+        cybt_platform_free(task_mem_cb.p_tx_cmd_mem);
+    }
+
+    memset(&task_mem_cb, 0, sizeof(cybt_task_mem_cb_t));
 }
 
-uint8_t cybt_platform_task_queue_utilization(uint8_t task_id)
+uint8_t cybt_platform_task_get_queue_utilization(uint8_t task_id)
 {
     size_t     item_cnt_in_queue = 0;
     cy_rslt_t  result;
@@ -235,15 +281,15 @@ uint8_t cybt_platform_task_queue_utilization(uint8_t task_id)
 
     switch(task_id)
     {
-        case BT_TASK_ID_BTU:
-            queue_total_cnt = BTU_TASK_QUEUE_COUNT;
+        case BT_TASK_ID_HCI_RX:
+            queue_total_cnt = HCI_RX_TASK_QUEUE_COUNT;
             break;
-        case BT_TASK_ID_HCI:
-            queue_total_cnt = HCI_TASK_QUEUE_COUNT;
+        case BT_TASK_ID_HCI_TX:
+            queue_total_cnt = HCI_TX_TASK_QUEUE_COUNT;
             break;
         default:
             MAIN_TRACE_ERROR("task_queue_utilization(): unknown task (%d)", task_id);
-            return 0;
+            return CYBT_INVALID_QUEUE_UTILIZATION;
     }
 
     result = cy_rtos_count_queue(&cybt_task_queue[task_id], &item_cnt_in_queue);
@@ -254,6 +300,37 @@ uint8_t cybt_platform_task_queue_utilization(uint8_t task_id)
     }
 
     return (item_cnt_in_queue * 100 / queue_total_cnt);
+}
+
+uint8_t cybt_platform_task_get_heap_utilization(wiced_bt_heap_t * p_heap,
+                                                                    uint16_t        *p_largest_free_size
+                                                                  )
+{
+    wiced_bool_t result;
+    wiced_bt_heap_statistics_t heap_stat = {0};
+
+    if(NULL == p_heap)
+    {
+        return CYBT_INVALID_HEAP_UTILIZATION;
+    }
+
+    result = wiced_bt_get_heap_statistics((void *) p_heap, &heap_stat);
+    if(WICED_FALSE == result)
+    {
+        return CYBT_INVALID_HEAP_UTILIZATION;
+    }
+
+    if(NULL != p_largest_free_size)
+    {
+        *p_largest_free_size = heap_stat.current_largest_free_size;
+    }
+
+    return (heap_stat.current_size_allocated * 100 / heap_stat.heap_size);
+}
+
+uint8_t cybt_platform_task_get_tx_heap_utilization(uint16_t                      *p_largest_free_size)
+{
+    return cybt_platform_task_get_heap_utilization(task_mem_cb.p_tx_data_heap, p_largest_free_size);
 }
 
 

@@ -36,8 +36,8 @@ cybt_platform_trace_cb_t trace_cb =
 {
    .trace_level = {INITIAL_TRACE_LEVEL_MAIN,
                    INITIAL_TRACE_LEVEL_SPIF,
-                   INITIAL_TRACE_LEVEL_BT_TASK,
-                   INITIAL_TRACE_LEVEL_HCI_TASK,
+                   INITIAL_TRACE_LEVEL_HCITX_TASK,
+                   INITIAL_TRACE_LEVEL_HCIRX_TASK,
                    INITIAL_TRACE_LEVEL_HCI_DRV,
                    INITIAL_TRACE_LEVEL_HCI_LOG,
                    INITIAL_TRACE_LEVEL_MEMORY,
