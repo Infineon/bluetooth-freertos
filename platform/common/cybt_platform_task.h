@@ -46,7 +46,7 @@
 #define HCI_TX_TASK_PRIORITY                (CY_RTOS_PRIORITY_HIGH)
 #define HCI_RX_TASK_PRIORITY                (CY_RTOS_PRIORITY_HIGH)
 
-#define HCI_RX_TASK_STACK_SIZE              (0x1000)
+#define HCI_RX_TASK_STACK_SIZE              (0x1400)
 #define HCI_TX_TASK_STACK_SIZE              (0x1000)
 
 #define CYBT_INVALID_HEAP_UTILIZATION       (0xFF)

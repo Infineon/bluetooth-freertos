@@ -58,7 +58,11 @@
 /******************************************************************************
  *                                Constants
  ******************************************************************************/
+#ifdef ENABLE_BT_SPY_LOG
+#define  CYBT_TRACE_BUFFER_SIZE    (256)
+#else
 #define  CYBT_TRACE_BUFFER_SIZE    (128)
+#endif //ENABLE_BT_SPY_LOG
 
 
 #ifdef __cplusplus

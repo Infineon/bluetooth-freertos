@@ -40,6 +40,9 @@
 #include "cybt_platform_trace.h"
 #include "cybt_platform_config.h"
 #include "cybt_platform_util.h"
+#ifdef ENABLE_BT_SPY_LOG
+#include "cybt_debug_uart.h"
+#endif // ENABLE_BT_SPY_LOG
 
 /******************************************************************************
  *                                Constants
@@ -67,7 +70,7 @@
 typedef uint8_t sleep_action_t;
 #endif
 
-typedef struct 
+typedef struct
 {
     bool            inited;
     cyhal_uart_t    hal_obj;
@@ -106,7 +109,6 @@ void cybt_idle_timer_cback(cy_timer_callback_arg_t arg);
 cybt_result_t cybt_send_action_to_sleep_task(sleep_action_t action);
 void cybt_sleep_timer_task(cy_thread_arg_t arg);
 #endif
-
 
 /******************************************************************************
  *                           Function Definitions
@@ -316,15 +318,20 @@ void cybt_platform_log_print(const char *fmt_str, ...)
 {
     char buffer[CYBT_TRACE_BUFFER_SIZE];
     va_list ap;
+    int len;
     cy_time_t time;
 
     cy_rtos_get_time(&time);
-
     va_start(ap, fmt_str);
-    vsnprintf(buffer, CYBT_TRACE_BUFFER_SIZE, fmt_str, ap);
+    len = vsnprintf(buffer, CYBT_TRACE_BUFFER_SIZE, fmt_str, ap);
     va_end(ap);
 
+#ifdef ENABLE_BT_SPY_LOG
+    cybt_debug_uart_send_trace(len, (uint8_t*)buffer);
+#else // ENABLE_BT_SPY_LOG
     printf("[%u] %s\r\n", (unsigned int)time, buffer);
+    UNUSED_VARIABLE(len);
+#endif // ENABLE_BT_SPY_LOG
 }
 
 static void cybt_uart_rx_not_empty(void)
@@ -677,13 +684,13 @@ cybt_result_t cybt_platform_hci_write(hci_packet_type_t type,
 {
     cy_rslt_t result;
     cybt_result_t return_status =  CYBT_SUCCESS;
-    
+
     if(false == hci_uart_cb.inited)
     {
         HCIDRV_TRACE_ERROR("hci_write(): UART is NOT initialized");
         return  CYBT_ERR_HCI_NOT_INITIALIZE;
     }
-    
+
     result = cy_rtos_get_mutex(&hci_uart_cb.tx_atomic, CY_RTOS_NEVER_TIMEOUT);
     if(CY_RSLT_SUCCESS != result)
     {
@@ -712,7 +719,7 @@ cybt_result_t cybt_platform_hci_write(hci_packet_type_t type,
     cybt_platform_sleep_unlock();
 
     cy_rtos_set_mutex(&hci_uart_cb.tx_atomic);
-        
+
     return return_status;
 }
 
@@ -762,7 +769,7 @@ cybt_result_t cybt_platform_hci_read(hci_packet_type_t type,
             cy_rtos_set_mutex(&hci_uart_cb.rx_atomic);
             return  CYBT_ERR_HCI_READ_FAILED;
         }
-    
+
         if(CY_RSLT_SUCCESS == result)
         {
             return_status = CYBT_SUCCESS;
@@ -773,7 +780,7 @@ cybt_result_t cybt_platform_hci_read(hci_packet_type_t type,
                                result,
                                hci_uart_cb.hal_obj.context.rxBufIdx
                               );
-    
+
             if(CY_RTOS_TIMEOUT == result)
             {
                 return_status =  CYBT_ERR_TIMEOUT;
@@ -783,7 +790,7 @@ cybt_result_t cybt_platform_hci_read(hci_packet_type_t type,
                 return_status =  CYBT_ERR_GENERIC;
             }
             *p_length = hci_uart_cb.hal_obj.context.rxBufIdx;
-    
+
             cyhal_uart_read_abort(&hci_uart_cb.hal_obj);
         }
     }
@@ -872,7 +879,7 @@ cybt_result_t cybt_platform_hci_close(void)
 
     memset(&hci_uart_cb, 0, sizeof(hci_uart_cb_t));
 
-    return  CYBT_SUCCESS; 
+    return  CYBT_SUCCESS;
 }
 
 void cybt_platform_hci_irq_rx_data_ind(bool enable)
@@ -889,8 +896,11 @@ void cybt_idle_timer_cback(cy_timer_callback_arg_t arg)
 {
     cybt_platform_disable_irq();
 
-    cyhal_syspm_unlock_deepsleep();
-    platform_sleep_lock = false;
+    if (platform_sleep_lock == true)
+    {
+        cyhal_syspm_unlock_deepsleep();
+        platform_sleep_lock = false;
+    }
 
     cybt_platform_enable_irq();
 }

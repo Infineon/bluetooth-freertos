@@ -243,6 +243,39 @@ void handle_hci_rx_sco(void)
                              );
 }
 
+#ifdef ENABLE_BT_SPY_LOG
+void handle_hci_diag(void)
+{
+#define EDR_LMP_RECV 1
+#define EDR_LMP_XMIT 0
+#define HCI_PACKET_TYPE_LMP_RECV 8
+#define HCI_PACKET_TYPE_LMP_XMIT 9
+
+    uint32_t read_len = 63; // fixed LMP len
+    uint8_t output_buf[64];
+    cybt_result_t result;
+
+    result = cybt_platform_hci_read(7,
+        (uint8_t*)& output_buf,
+        &read_len,
+        CY_RTOS_NEVER_TIMEOUT
+    );
+
+    if (CYBT_SUCCESS != result)
+    {
+        HCIRXTASK_TRACE_ERROR("handle_hci_diag(): read failed (0x%x)", result);
+        return;
+    }
+
+    if (output_buf[0] == EDR_LMP_RECV)
+        cybt_debug_uart_send_hci_trace(HCI_PACKET_TYPE_LMP_RECV, read_len - 1, &output_buf[1]);
+    else if (output_buf[0] == EDR_LMP_XMIT)
+        cybt_debug_uart_send_hci_trace(HCI_PACKET_TYPE_LMP_XMIT, read_len - 1, &output_buf[1]);
+    else
+        return;
+}
+#endif // ENABLE_BT_SPY_LOG
+
 void handle_hci_rx_data_ready(hci_packet_type_t hci_packet_type)
 {
     uint32_t read_len = 0;
@@ -278,6 +311,11 @@ void handle_hci_rx_data_ready(hci_packet_type_t hci_packet_type)
                 case HCI_PACKET_TYPE_SCO:
                     handle_hci_rx_sco();
                     break;
+#ifdef ENABLE_BT_SPY_LOG
+                case HCI_PACKET_TYPE_DIAG:
+                    handle_hci_diag();
+                    break;
+#endif // ENABLE_BT_SPY_LOG
                 default:
                     HCIRXTASK_TRACE_ERROR("handle_hci_rx_data_ready(): unknown type (0x%02x)",
                                           hci_packet_type
