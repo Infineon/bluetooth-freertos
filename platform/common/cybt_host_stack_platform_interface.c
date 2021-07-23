@@ -37,7 +37,9 @@
 
 #include "cyhal_lptimer.h"
 #include "cycfg_system.h"
-
+#ifdef ENABLE_BT_SPY_LOG
+#include "cybt_debug_uart.h"
+#endif
 
 /******************************************************************************
  *                           Variables Definitions
@@ -389,6 +391,13 @@ void host_stack_print_trace_log(char *p_trace_buf,
     }
 }
 
+#ifdef ENABLE_BT_SPY_LOG
+void cybt_hci_trace_cb(wiced_bt_hci_trace_type_t type, uint16_t len, uint8_t* p_data)
+{
+    cybt_debug_uart_send_hci_trace(type, len, p_data);
+}
+#endif
+
 void host_stack_platform_interface_init(void)
 {
     wiced_bt_stack_platform_t host_stack_platform_if = {0};
@@ -409,7 +418,11 @@ void host_stack_platform_interface_init(void)
     host_stack_platform_if.pf_write_cmd_to_lower      = host_stack_send_cmd_to_lower;
     host_stack_platform_if.pf_get_sco_to_lower_buffer = host_stack_get_sco_to_lower_buffer;
     host_stack_platform_if.pf_write_sco_to_lower      = host_stack_send_sco_to_lower;
+#ifdef ENABLE_BT_SPY_LOG
+    host_stack_platform_if.pf_hci_trace_cback_t       = cybt_hci_trace_cb;
+#else
     host_stack_platform_if.pf_hci_trace_cback_t       = NULL;
+#endif
     host_stack_platform_if.pf_debug_trace             = host_stack_print_trace_log;
     host_stack_platform_if.trace_buffer               = bt_trace_buf;
     host_stack_platform_if.trace_buffer_len           = CYBT_TRACE_BUFFER_SIZE;

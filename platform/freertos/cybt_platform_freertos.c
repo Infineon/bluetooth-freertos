@@ -176,6 +176,11 @@ void cybt_platform_init(void)
                                false
                               );
     cyhal_lptimer_register_callback(&bt_stack_lptimer, &platform_stack_lptimer_cback, NULL);
+    cyhal_lptimer_enable_event(&bt_stack_lptimer,
+                               CYHAL_LPTIMER_COMPARE_MATCH,
+                               CYHAL_ISR_PRIORITY_DEFAULT,
+                               true
+                              );
 
     lptimer_freq_shift = calculate_lptimer_freq_shift(CY_CFG_SYSCLK_CLKLF_FREQ_HZ);
 

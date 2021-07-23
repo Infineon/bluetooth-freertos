@@ -33,10 +33,6 @@
 
 #include "wiced_memory.h"
 
-#ifdef ENABLE_BT_SPY_LOG
-extern cybt_result_t cybt_init_debug_trans_task(void);
-#endif // ENABLE_BT_SPY_LOG
-
 /*****************************************************************************
  *                                Constants
  *****************************************************************************/
@@ -151,10 +147,6 @@ cybt_result_t cybt_platform_task_init(void)
                         );
         return CYBT_ERR_CREATE_TASK_FAILED;
     }
-
-#ifdef ENABLE_BT_SPY_LOG
-    cybt_init_debug_trans_task();
-#endif // ENABLE_BT_SPY_LOG
 
     return CYBT_SUCCESS;
 }
