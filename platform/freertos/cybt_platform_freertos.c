@@ -40,6 +40,9 @@
 #include "cybt_platform_trace.h"
 #include "cybt_platform_config.h"
 #include "cybt_platform_util.h"
+#ifdef ENABLE_BT_SPY_LOG
+#include "cybt_debug_uart.h"
+#endif // ENABLE_BT_SPY_LOG
 
 /******************************************************************************
  *                                Constants
@@ -107,7 +110,6 @@ cybt_result_t cybt_send_action_to_sleep_task(sleep_action_t action);
 void cybt_sleep_timer_task(cy_thread_arg_t arg);
 #endif
 
-
 /******************************************************************************
  *                           Function Definitions
  ******************************************************************************/
@@ -174,6 +176,11 @@ void cybt_platform_init(void)
                                false
                               );
     cyhal_lptimer_register_callback(&bt_stack_lptimer, &platform_stack_lptimer_cback, NULL);
+    cyhal_lptimer_enable_event(&bt_stack_lptimer,
+                               CYHAL_LPTIMER_COMPARE_MATCH,
+                               CYHAL_ISR_PRIORITY_DEFAULT,
+                               true
+                              );
 
     lptimer_freq_shift = calculate_lptimer_freq_shift(CY_CFG_SYSCLK_CLKLF_FREQ_HZ);
 
@@ -316,15 +323,20 @@ void cybt_platform_log_print(const char *fmt_str, ...)
 {
     char buffer[CYBT_TRACE_BUFFER_SIZE];
     va_list ap;
+    int len;
     cy_time_t time;
 
     cy_rtos_get_time(&time);
-
     va_start(ap, fmt_str);
-    vsnprintf(buffer, CYBT_TRACE_BUFFER_SIZE, fmt_str, ap);
+    len = vsnprintf(buffer, CYBT_TRACE_BUFFER_SIZE, fmt_str, ap);
     va_end(ap);
 
+#ifdef ENABLE_BT_SPY_LOG
+    cybt_debug_uart_send_trace(len, (uint8_t*)buffer);
+#else // ENABLE_BT_SPY_LOG
     printf("[%u] %s\r\n", (unsigned int)time, buffer);
+    UNUSED_VARIABLE(len);
+#endif // ENABLE_BT_SPY_LOG
 }
 
 static void cybt_uart_rx_not_empty(void)

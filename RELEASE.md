@@ -7,6 +7,9 @@ This release of Cypress WICED BT/BLE stack solution package includes as followin
 * WICED BLE stack library and API headers (by btstack.lib)
 * Platform and Operation System porting layer
 
+#### v2.1.0
+* Fix no lptimer callback after mtb-hal-cat1 v1.6
+
 #### v2.0.0
 * Software Thread Architecture change (HCI_TX and HCI_RX tasks are introduced, replace HCI and BT tasks in earlier versions)
 * Cypress Bluetooth chip 4373 support

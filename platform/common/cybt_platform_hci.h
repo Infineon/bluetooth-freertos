@@ -49,6 +49,7 @@ typedef enum
     HCI_PACKET_TYPE_ACL      = 0x02,
     HCI_PACKET_TYPE_SCO      = 0x03,
     HCI_PACKET_TYPE_EVENT    = 0x04,
+    HCI_PACKET_TYPE_DIAG     = 0x07,
     HCI_PACKET_TYPE_LOOPBACK = 0xFF
 } hci_packet_type_t;
 
@@ -173,6 +174,9 @@ cybt_result_t cybt_platform_hci_close(void);
  */
 void cybt_platform_hci_irq_rx_data_ind(bool enable);
 
+#ifdef ENABLE_BT_SPY_LOG
+cybt_result_t cybt_debug_uart_send_hci_trace(uint8_t type, uint16_t length, uint8_t* p_data);
+#endif // ENABLE_BT_SPY_LOG
 
 #ifdef __cplusplus
 } /* extern "C" */
