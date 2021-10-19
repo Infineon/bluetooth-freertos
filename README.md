@@ -14,21 +14,53 @@ Besides of stack settings, HCI configuration is also required to specify,
 including pins, format and UART baudrate. Please refer to cybt_platform_config.h 
 for more detail:
 
-*  structure **cybt_platform_config_t**
-*  API **cybt_platform_config_init( )**
+ - structure **cybt_platform_config_t**
+ - API **cybt_platform_config_init( )**
 
 The API **cybt_platform_config_init( )** shall be invoked prior to 
 **wiced_bt_stack_init( )**
 
 ## How to enable trace log?
-*  Compile time definition: Please refer to cybt_platform_config.h which can set individual trace log (Default set all category is CYBT_TRACE_LEVEL_ERROR)
-*  Run time update: Dynamic set trace level by using API **cybt_platform_set_trace_level( )**
-*  Enable libbtstack.a trace or use `WICED_BT_TRACE` macro, please set `CYBT_TRACE_ID_STACK` category which be invoked prior to **host_stack_platform_interface_init( )**,
-   and can not used after **host_stack_platform_interface_deinit( )**   
-*  Undefined `CYBT_PLATFORM_TRACE_ENABLE` to disables all the debug log messages
-  ```
-  //#define CYBT_PLATFORM_TRACE_ENABLE
-  ```
+ - *Compile time definition:* Please refer to cybt_platform_trace.h which can set individual trace log level (Default set all category is CYBT_TRACE_LEVEL_ERROR)
+ - *Run time update:* Dynamic set trace level by using API **cybt_platform_set_trace_level(id, level);**
+   - For example: set all catoegories as debug level
+	   ```
+	   cybt_platform_set_trace_level(CYBT_TRACE_ID_ALL, CYBT_TRACE_LEVEL_DEBUG);
+	   ```
+ - Undefine the CYBT_PLATFORM_TRACE_ENABLE macro to disable all debug log messages
+
+## How to enable BTSpy logs?
+ - BTSpy is a trace utility that can be used in the WICED BT platforms to view protocol and generic trace messages from the embedded device
+ - Add macro ENABLE_BT_SPY_LOG in Makefile or command line
+   - `DEFINES+=ENABLE_BT_SPY_LOG`
+ - Call **cybt_debug_uart_init(&debug_uart_configuration, NULL);**
+   - The first argument is the debug_uart_configurations structure pointer, which has hardware pin configurations along with baud_rate and flow_control configurations. Recommended baudrate is 3000000, although 115200 is also supported by the BTSpy tool. The second argument is an optional callback function which can be set to NULL
+   - Ensure retarget-io is not enabled on the same UART port as BTSpy. There is no need to initialize the retarget-io libray if the application wants to send both application messages and BT protocol traces to the same port through BTSpy
+   - Compiler directives can be used to either initialize the retarget-io library or BTSpy logs depending on the debug macro setting. For example:
+     ```
+     #ifdef ENABLE_BT_SPY_LOG
+        {
+            #define DEBUG_UART_BAUDRATE 3000000
+            #define DEBUG_UART_RTS        (P5_2)
+            #define DEBUG_UART_CTS        (P5_3)
+            cybt_debug_uart_config_t debug_uart_config = {
+                    .uart_tx_pin = CYBSP_DEBUG_UART_TX,
+                    .uart_rx_pin = CYBSP_DEBUG_UART_RX,
+                    .uart_cts_pin = DEBUG_UART_CTS,
+                    .uart_rts_pin = DEBUG_UART_RTS,
+                    .baud_rate = DEBUG_UART_BAUDRATE,
+                    .flow_control = TRUE
+            };
+            cybt_debug_uart_init(&debug_uart_config, NULL);
+        }
+     #else
+        cy_retarget_io_init(CYBSP_DEBUG_UART_TX, CYBSP_DEBUG_UART_RX, CY_RETARGET_IO_BAUDRATE);
+     #endif
+     ```
+ - Download and use [BTSPY](https://github.com/Infineon/btsdk-utils)
+   - Click on serial port setup
+   - Select "Enable Serial Port"
+   - Select the corrct baudrate, port number and enable HW flow control
 
 ## Working flow
 

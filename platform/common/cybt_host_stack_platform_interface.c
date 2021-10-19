@@ -6,7 +6,9 @@
 *
 ********************************************************************************
 * \copyright
-* Copyright 2018-2019 Cypress Semiconductor Corporation
+* Copyright 2018-2021 Cypress Semiconductor Corporation (an Infineon company) or
+* an affiliate of Cypress Semiconductor Corporation.
+*
 * SPDX-License-Identifier: Apache-2.0
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -112,7 +114,7 @@ uint8_t *host_stack_get_acl_to_lower_buffer(wiced_bt_transport_t transport, uint
                      p_bt_msg,
                      size
                     );
-    
+
     p = (uint8_t *)(p_bt_msg + 1);
 
     p_bt_msg->event = BT_EVT_TO_HCI_ACL;
@@ -446,7 +448,7 @@ void host_stack_platform_interface_deinit(void)
     wiced_result_t result;
 
     result = wiced_bt_stack_platform_initialize(&host_stack_platform_if);
-    
+
     if(WICED_SUCCESS != result)
     {
         SPIF_TRACE_ERROR("platform_interface_deinit(): failed, result = 0x%x", result);

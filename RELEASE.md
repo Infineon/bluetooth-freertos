@@ -7,6 +7,11 @@ This release of Cypress WICED BT/BLE stack solution package includes as followin
 * WICED BLE stack library and API headers (by btstack.lib)
 * Platform and Operation System porting layer
 
+#### v3.2.0
+* Enable BTSpy trace utility
+* Cypress Bluetooth chip 43439 support(26MHz)
+* Support HAL version v2.0 which API changed
+
 #### v3.1.0
 * Firmware folder restructure
 * Fix no lptimer callback after mtb-hal-cat1 v1.6
@@ -42,12 +47,12 @@ This version of Cypress BT/BLE stack API was validated for compatibility with th
 
 | Software and Tools                        | Version |
 | :---                                      | :----:  |
-| ModusToolbox Software Environment         | 2.0     |
-| GCC Compiler                              | 7.4     |
-| IAR Compiler                              | 8.32    |
+| ModusToolbox™ Software Environment        | 2.4.0   |
+| GCC Compiler                              | 10.3.1  |
+| IAR Compiler                              | 8.4     |
 | ARM Compiler                              | 6.11    |
 | mbed OS                                   | 5.15    |
-| FreeRTOS                                  | 10.0.1  |
+| FreeRTOS                                  | 10.4.3  |
 
 ---
-© Cypress Semiconductor Corporation, 2019-2020.
+© Cypress Semiconductor Corporation (an Infineon company) or an affiliate of Cypress Semiconductor Corporation, 2019-2021.
