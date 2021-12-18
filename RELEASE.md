@@ -7,6 +7,9 @@ This release of Cypress WICED BT/BLE stack solution package includes as followin
 * WICED BLE stack library and API headers (by btstack.lib)
 * Platform and Operation System porting layer
 
+#### v3.3.0
+* Cypress Bluetooth chip 43439 support(Murata EA 37.4MHz)
+
 #### v3.2.0
 * Enable BTSpy trace utility
 * Cypress Bluetooth chip 43439 support(26MHz)

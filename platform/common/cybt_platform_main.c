@@ -177,11 +177,6 @@ wiced_result_t cybt_core_management_cback( wiced_bt_management_evt_t event, wice
 {
     wiced_result_t result = WICED_BT_SUCCESS;
 
-    if(event == BTM_DISABLED_EVT)
-    {
-        wiced_bt_stack_platform_deinit();
-    }
-
     if(cybt_main_cb.p_app_management_callback)
     {
         result = cybt_main_cb.p_app_management_callback(event, p_event_data);

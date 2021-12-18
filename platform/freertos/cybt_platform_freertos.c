@@ -221,11 +221,6 @@ void cybt_platform_deinit(void)
 void cybt_platform_sleep_lock(void)
 {
 #if( configUSE_TICKLESS_IDLE != 0 )
-    cyhal_uart_event_t enable_irq_event = (cyhal_uart_event_t)(CYHAL_UART_IRQ_RX_DONE
-                                           | CYHAL_UART_IRQ_TX_DONE
-                                           | CYHAL_UART_IRQ_RX_NOT_EMPTY
-                                          );
-
     cybt_platform_disable_irq();
 
     if(false == platform_sleep_lock)
@@ -233,15 +228,6 @@ void cybt_platform_sleep_lock(void)
         cyhal_syspm_lock_deepsleep();
 
         platform_sleep_lock = true;
-
-        if(hci_uart_cb.inited)
-        {
-            cyhal_uart_enable_event(&hci_uart_cb.hal_obj,
-                                    enable_irq_event,
-                                    CYHAL_ISR_PRIORITY_DEFAULT,
-                                    true
-                                   );
-        }
     }
 
     cybt_send_action_to_sleep_task(SLEEP_ACT_STOP_IDLE_TIMER);
