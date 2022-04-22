@@ -1,3 +1,7 @@
+/*
+ * $ Copyright (C) 2020-2021 Infineon Technologies AG $
+ */
+
 #include <stdint.h>
 
 /* labelling: appname-(chipname)(stepping)-frequency-(headset GIT SHA)-(generating SDK version)-

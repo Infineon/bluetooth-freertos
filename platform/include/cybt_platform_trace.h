@@ -37,8 +37,9 @@
  *
  *  @{
  */
-#define CYBT_PLATFORM_TRACE_ENABLE
-
+#ifndef CYBT_PLATFORM_TRACE_ENABLE
+#define CYBT_PLATFORM_TRACE_ENABLE 1
+#endif
 
 /*****************************************************************************
  *                                Constants
@@ -105,8 +106,7 @@ extern "C"
 {
 #endif
 
-#ifdef CYBT_PLATFORM_TRACE_ENABLE
-
+#if (CYBT_PLATFORM_TRACE_ENABLE == 1)
 extern cybt_platform_trace_cb_t trace_cb;
 
 extern void cybt_platform_log_print(const char *fmt_str, ...);

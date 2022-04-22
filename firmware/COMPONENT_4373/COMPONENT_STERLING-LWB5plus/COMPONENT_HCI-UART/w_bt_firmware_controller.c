@@ -1,3 +1,7 @@
+/*
+ * $ Copyright (C) 2020-2021 Infineon Technologies AG $
+ */
+
 #include <stdint.h>
 
 /* labelling: appname-(chipname)(stepping)-frequency-(headset GIT SHA)-(generating SDK version)-
@@ -5,7 +9,9 @@
 const char brcm_patch_version[] = "CYW4373A0_001.001.025.0090.0129_UART_M2";
 const uint8_t brcm_patchram_format = 0x01;
 /* Configuration Data Records (Write_RAM) */
-const uint8_t brcm_patchram_buf[] = {
+#ifndef FW_DATBLOCK_SEPARATE_FROM_APPLICATION
+const uint8_t brcm_patchram_buf[] =
+{
     0x4C, 0xFC, 0x46, 0x00, 0xB5, 0x21, 0x00, 0x42, 0x52, 0x43, 0x4D, 0x63, 0x66, 0x67, 0x53, 0x00,
     0x00, 0x00, 0x00, 0x32, 0x00, 0x00, 0x00, 0x01, 0x01, 0x04, 0x18, 0x92, 0x00, 0x00, 0x00, 0x03,
     0x06, 0xAC, 0x1F, 0x00, 0xA0, 0x73, 0x43, 0x00, 0x01, 0x1C, 0x42, 0xB5, 0x21, 0x00, 0x00, 0x00,
@@ -3094,3 +3100,4 @@ const uint8_t brcm_patchram_buf[] = {
 };
 
 const int brcm_patch_ram_length = sizeof(brcm_patchram_buf);
+#endif /* FW_DATBLOCK_SEPARATE_FROM_APPLICATION */

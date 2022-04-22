@@ -1,10 +1,10 @@
-﻿# WICED Bluetooth Host Stack solution (for FreeRTOS)
+﻿# AIROC&trade; Bluetooth&reg; Host Stack solution (for FreeRTOS)
 
 ## Overview
-WICED Bluetooth host stack solution includes bluetooth stack library,
-bluetooth controller firmware and platform/os porting layer. Bluetooth stack library
+AIROC&trade; Bluetooth&reg; host stack solution includes Bluetooth&reg; stack library,
+Bluetooth&reg; controller firmware and platform/os porting layer. Bluetooth&reg; stack library
 is designed for embedded device, it consumes less RAM/ROM usage but still keeps
-high performance. With WICED Bluetooth API set, application developers can use them
+high performance. With AIROC&trade; Bluetooth&reg; API set, application developers can use them
 easily to create their own application. The porting layer is implemented by CYHAL and CY_RTOS_AL
 (Hardware/Operation System Adaptation Layer), hence it can adapt to Cypress platforms, and easy to 
 port to other vendor's platform.  
@@ -21,16 +21,18 @@ The API **cybt_platform_config_init( )** shall be invoked prior to
 **wiced_bt_stack_init( )**
 
 ## How to enable trace log?
- - *Compile time definition:* Please refer to cybt_platform_trace.h which can set individual trace log level (Default set all category is CYBT_TRACE_LEVEL_ERROR)
+ - *Compile time definition:* Please refer to cybt_platform_trace.h which can set individual trace log level
+   - Application makefile add **DEFINES+=CYBT_PLATFORM_TRACE_ENABLE=0** to disable debug log
+   - Application makefile add **DEFINES+=CYBT_PLATFORM_TRACE_ENABLE=1** to enable debug log
+   - Default set all category is CYBT_TRACE_LEVEL_ERROR
  - *Run time update:* Dynamic set trace level by using API **cybt_platform_set_trace_level(id, level);**
    - For example: set all catoegories as debug level
 	   ```
 	   cybt_platform_set_trace_level(CYBT_TRACE_ID_ALL, CYBT_TRACE_LEVEL_DEBUG);
 	   ```
- - Undefine the CYBT_PLATFORM_TRACE_ENABLE macro to disable all debug log messages
 
 ## How to enable BTSpy logs?
- - BTSpy is a trace utility that can be used in the WICED BT platforms to view protocol and generic trace messages from the embedded device
+ - BTSpy is a trace utility that can be used in the AIROC&trade; Bluetooth&reg; platforms to view protocol and generic trace messages from the embedded device
  - Add macro ENABLE_BT_SPY_LOG in Makefile or command line
    - `DEFINES+=ENABLE_BT_SPY_LOG`
  - Call **cybt_debug_uart_init(&debug_uart_configuration, NULL);**
@@ -67,40 +69,40 @@ The API **cybt_platform_config_init( )** shall be invoked prior to
 ### ~ release-v1.3.0
  - Porting layer create 2 tasks
    - **HCI task** which handles HCI packet transmission and reception
-   - **BTU/BT task** which handles Bluetooth core stack and profiles
+   - **BTU/BT task** which handles Bluetooth&reg; core stack and profiles
  - TX path:
-   - BT stack calls pf_write_xxx_to_lower( ) with packet data
+   - Bluetooth&reg; stack calls pf_write_xxx_to_lower( ) with packet data
    - Inside those functions,
        - Allocate memory from porting layer heap for the TX packet
        - Put TX packet into HCI task queue
    - HCI task gets TX packet from the queue then write the same to HCI UART
  - RX path:
-   - UART driver fires the interrupt when data was coming from BT controller
+   - UART driver fires the interrupt when data was coming from Bluetooth&reg; controller
    - In IRQ handler, put the related message to HCI task queue
    - Once HCI task gets the message,
      - Allocate memory from porting layer heap, read the packet from UART and write the same to the allocated memory
-     - Put RX packet into BT task queue.
-   - BT task gets RX packet then calls wiced_bt_process_xxx() to notify BT stack
+     - Put RX packet into Bluetooth&reg; task queue.
+   - Bluetooth&reg; task gets RX packet then calls wiced_bt_process_xxx() to notify Bluetooth&reg; stack
 
 ### since release-v2.0.0
  - Porting layer create 2 tasks
-   - **HCI_TX task** which handles HCI packet from BT stack to BT controller
-   - **HCI_RX task** which handles HCI packet from BT controller to BT stack
+   - **HCI_TX task** which handles HCI packet from Bluetooth&reg; stack to Bluetooth&reg; controller
+   - **HCI_RX task** which handles HCI packet from Bluetooth&reg; controller to Bluetooth&reg; stack
  - TX path:
-   - BT stack calls pf_write_xxx_to_lower( ) with packet data
+   - Bluetooth&reg; stack calls pf_write_xxx_to_lower() with packet data
    - Inside those functions,
      - Allocate memory from porting layer heap for the TX packet
      - Put TX packet into HCI_TX task queue
    - HCI_TX task gets TX packet from the queue then write the same to HCI UART
  - RX path:
-   - UART driver fires the interrupt when data was coming from BT controller
+   - UART driver fires the interrupt when data was coming from Bluetooth&reg; controller
    - In IRQ handler, put the related message to HCI_RX task queue
    - Once HCI_RX task gets the message,
      - Read the packet from UART and write the same to the static buffer
-     - Call wiced_bt_process_xxx() to notify BT stack
+     - Call wiced_bt_process_xxx() to notify Bluetooth&reg; stack
 
 ## API Reference Manual
- - [Bluetooth platform API manual](https://cypresssemiconductorco.github.io/bluetooth-freertos/api_reference_manual/html/index.html)
- - [Bluetooth stack BLE API manual](https://cypresssemiconductorco.github.io/btstack/ble/api_reference_manual/html/index.html)
+ - [Bluetooth&reg; platform API manual](https://cypresssemiconductorco.github.io/bluetooth-freertos/api_reference_manual/html/index.html)
+ - [Bluetooth&reg; stack BLE API manual](https://cypresssemiconductorco.github.io/btstack/ble/api_reference_manual/html/index.html)
     
-© Cypress Semiconductor Corporation, 2020.
+© Infineon Technologies, 2019.

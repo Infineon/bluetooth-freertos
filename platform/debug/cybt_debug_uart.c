@@ -21,10 +21,10 @@
 #define DEBUG_UART_RX_TASK_PRIORITY     (CY_RTOS_PRIORITY_ABOVENORMAL)
 
 #define WICED_HDR_SZ 5
-#define MAX_TRACE_DATA_LEN          300
+#define MAX_TRACE_DATA_LEN          1000
 #define MAX_RX_DATA_LEN             1000
 
-#define DEBUG_UART_MEMORY_SIZE      (MAX_TRACE_DATA_LEN * DEBUG_UART_TX_TASK_QUEUE_COUNT)
+#define DEBUG_UART_MEMORY_SIZE      (MAX_TRACE_DATA_LEN * 6)
 
 #define HCI_CONTROL_GROUP_DEVICE                              0x00
 #define HCI_CONTROL_EVENT_WICED_TRACE                       ( ( HCI_CONTROL_GROUP_DEVICE << 8 ) | 0x02 )    /* WICED trace packet */

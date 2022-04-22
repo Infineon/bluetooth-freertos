@@ -101,10 +101,12 @@ uint8_t *host_stack_get_acl_to_lower_buffer(wiced_bt_transport_t transport, uint
 
     if(NULL == p_bt_msg)
     {
+    #if (CYBT_PLATFORM_TRACE_ENABLE == 1)
         uint16_t largest_free_size = 0;
         uint8_t  use_perc = 0;
         use_perc = cybt_platform_task_get_tx_heap_utilization(&largest_free_size);
         SPIF_TRACE_ERROR("get_acl_to_lower_buffer(): Unable to alloc memory (size = %d, heap = %d%%)", size, use_perc);
+    #endif
 
         cybt_lock_hci_tx(CYBT_HCI_TX_BLOCKED_HEAP_RAN_OUT);
         return NULL;
@@ -284,10 +286,12 @@ uint8_t *host_stack_get_sco_to_lower_buffer(uint32_t size)
 
     if(NULL == p_bt_msg)
     {
+    #if (CYBT_PLATFORM_TRACE_ENABLE == 1)
         uint16_t largest_free_size = 0;
         uint8_t  use_perc = 0;
         use_perc = cybt_platform_task_get_tx_heap_utilization(&largest_free_size);
         SPIF_TRACE_ERROR("get_acl_to_lower_buffer(): Unable to alloc memory (size = %d, heap = %d%%)", size, use_perc);
+    #endif
 
         cybt_lock_hci_tx(CYBT_HCI_TX_BLOCKED_HEAP_RAN_OUT);
         return NULL;

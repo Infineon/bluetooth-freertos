@@ -29,7 +29,7 @@
 
 #include "cybt_platform_trace.h"
 
-#ifdef CYBT_PLATFORM_TRACE_ENABLE
+#if (CYBT_PLATFORM_TRACE_ENABLE == 1)
 
 /******************************************************************************
  *                           Variables Definitions

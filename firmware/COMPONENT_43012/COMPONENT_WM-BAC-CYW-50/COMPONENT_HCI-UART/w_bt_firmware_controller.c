@@ -1,3 +1,7 @@
+/*
+ * $ Copyright (C) 2020-2021 Infineon Technologies AG $
+ */
+
 #include <stdint.h>
 
 /* labelling: appname-(chipname)(stepping)-frequency-(headset GIT SHA)-(generating SDK version)-
@@ -5,6 +9,7 @@
 const char brcm_patch_version[] = "CYW43012C0_003.001.015.0229.0000_Generic_UART_37_4MHz_wlbga_ref3_sLNA_USI";
 const uint8_t brcm_patchram_format = 0x01;
 /* Configuration Data Records (Write_RAM) */
+#ifndef FW_DATBLOCK_SEPARATE_FROM_APPLICATION
 const uint8_t brcm_patchram_buf[] =
 {
     0x4C, 0xFC, 0x46, 0x00, 0x00, 0x22, 0x00, 0x42, 0x52, 0x43, 0x4D, 0x63, 0x66, 0x67, 0x53, 0x00,
@@ -5167,3 +5172,4 @@ const uint8_t brcm_patchram_buf[] =
 };
 
 const int brcm_patch_ram_length = sizeof(brcm_patchram_buf);
+#endif /* FW_DATBLOCK_SEPARATE_FROM_APPLICATION */
